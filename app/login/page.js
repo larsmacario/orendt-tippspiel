@@ -15,6 +15,7 @@ import {
   requestPasswordReset,
   getSettings,
   activateProfile,
+  assertSupabaseConfigured,
 } from "@/lib/supabase"
 
 export default function LoginPage() {
@@ -55,6 +56,7 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
+      assertSupabaseConfigured()
       if (isSignUp) {
         const settings = await getSettings()
         const whitelist = (settings.domain_whitelist || "").trim()
@@ -109,6 +111,7 @@ export default function LoginPage() {
     }
     setLoading(true)
     try {
+      assertSupabaseConfigured()
       await triggerOtpReset(normalizedEmail)
     } catch (err) {
       setError(err.message)
@@ -126,6 +129,7 @@ export default function LoginPage() {
     }
     setLoading(true)
     try {
+      assertSupabaseConfigured()
       const { error: verifyError } = await supabase.auth.verifyOtp({
         email: normalizedEmail,
         token: otpCode.trim(),
