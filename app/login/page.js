@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import Footer from "@/components/Footer"
+import LoginHeadlineLottie from "@/components/LoginHeadlineLottie"
 import {
   supabase,
   signIn,
@@ -165,13 +166,18 @@ export default function LoginPage() {
       </div>
       <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-12 relative z-10">
         <div className="w-full max-w-md">
-          <div className="text-center mb-8 animate-slide-up">
-            <h1 className="font-display text-[32px] sm:text-[42px] font-bold text-orendt-black mb-3 tracking-tighter">
-              WM Tipprunde
-            </h1>
-            <p className="font-display text-[10px] font-bold uppercase tracking-[0.4em] text-orendt-gray-400">
-              FIFA WM 2026 · Orendt Studios
-            </p>
+          <div className="relative text-center mb-8 animate-slide-up py-6 sm:py-8">
+            <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-center pointer-events-none z-0">
+              <LoginHeadlineLottie />
+            </div>
+            <div className="relative z-10">
+              <h1 className="font-display text-[32px] sm:text-[42px] font-bold text-orendt-black mb-3 tracking-tighter">
+                WM Tipprunde
+              </h1>
+              <p className="font-display text-[10px] font-bold uppercase tracking-[0.4em] text-orendt-gray-400">
+                FIFA WM 2026 · Orendt Studios
+              </p>
+            </div>
           </div>
           <div className="bg-white p-6 sm:p-8 rounded-[2rem] border border-orendt-gray-100 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.08)] animate-scale-in">
             <form onSubmit={handleSubmit} className="space-y-5">
