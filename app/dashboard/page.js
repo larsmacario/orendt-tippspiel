@@ -8,11 +8,12 @@ import Footer from "@/components/Footer"
 import MatchCard from "@/components/MatchCard"
 import PredictionRow from "@/components/PredictionRow"
 import Leaderboard from "@/components/Leaderboard"
-import { getTodayMatches, getUpcomingMatches, getMyPredictions, getMyRank, getLeaderboard, getPredictionLockMinutes } from "@/lib/supabase"
+import OnboardingModal from "@/components/OnboardingModal"
+import { getTodayMatches, getUpcomingMatches, getMyPredictions, getMyRank, getLeaderboard, getPredictionLockMinutes, markOnboardingSeen } from "@/lib/supabase"
 import { isLocked, getMatchdayKey, formatDate } from "@/lib/dates"
 
 export default function DashboardPage() {
-  const { user, loading } = useAuth()
+  const { user, loading, refresh } = useAuth()
   const router = useRouter()
   const [todayMatches, setTodayMatches] = useState([])
   const [upcoming, setUpcoming] = useState([])
@@ -21,10 +22,33 @@ export default function DashboardPage() {
   const [topThree, setTopThree] = useState([])
   const [lockMinutes, setLockMinutes] = useState(30)
   const [dataLoading, setDataLoading] = useState(true)
+  const [showOnboarding, setShowOnboarding] = useState(false)
 
   useEffect(() => {
     if (!loading && !user) router.replace("/login")
   }, [user, loading, router])
+
+  useEffect(() => {
+    if (!user || dataLoading) return
+    if (user.onboarding_seen === false) {
+      setShowOnboarding(true)
+    }
+  }, [user, dataLoading])
+
+  const handleCloseOnboarding = useCallback(async () => {
+    setShowOnboarding(false)
+    if (!user?.id) return
+    await markOnboardingSeen(user.id)
+    await refresh()
+  }, [user?.id, refresh])
+
+  const handleGoToGuideFromOnboarding = useCallback(async () => {
+    setShowOnboarding(false)
+    if (user?.id) {
+      await markOnboardingSeen(user.id)
+      await refresh()
+    }
+  }, [user?.id, refresh])
 
   const loadData = useCallback(async () => {
     if (!user) return
@@ -78,6 +102,11 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-orendt-gray-50 flex flex-col">
       <Header user={user} currentPage="dashboard" />
+      <OnboardingModal
+        open={showOnboarding}
+        onClose={handleCloseOnboarding}
+        onGoToGuide={handleGoToGuideFromOnboarding}
+      />
       <main className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 py-10 animate-slide-up">
         <div className="mb-10">
           <p className="font-display text-[11px] font-bold tracking-[0.2em] uppercase text-orendt-gray-500 mb-3">Willkommen zurück</p>
