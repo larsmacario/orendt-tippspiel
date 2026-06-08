@@ -33,7 +33,7 @@ const SCORING_ROWS = [
 
 const STEPS = [
   { step: "1", title: "Dashboard oder Spielplan öffnen", text: "Unter Dashboard siehst du fehlende Tipps. Im Spielplan findest du alle Spiele mit Filtern." },
-  { step: "2", title: "Ergebnis eingeben", text: "Trage Heim- und Auswärtstore ein. Dein Tipp wird automatisch gespeichert." },
+  { step: "2", title: "Ergebnis eingeben", text: "Trage Heim- und Auswärtstore ein. Bestätige deinen Tipp mit dem Speichern-Button unten." },
   { step: "3", title: "Bis zur Deadline ändern", text: "Tipps kannst du zurücksetzen und neu eingeben, solange die Tipp-Sperre noch nicht aktiv ist." },
   { step: "4", title: "Punkte sammeln", text: "Nach Abpfiff werden deine Punkte automatisch berechnet und in der Rangliste verbucht." },
 ]

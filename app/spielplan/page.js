@@ -7,6 +7,7 @@ import Header from "@/components/Header"
 import Footer from "@/components/Footer"
 import PredictionRow from "@/components/PredictionRow"
 import { getMatches, getMyPredictions, getPredictionLockMinutes } from "@/lib/supabase"
+import { usePredictionSaveFab, PredictionSaveFab } from "@/lib/usePredictionSaveFab"
 import { isLocked, PHASE_LABELS } from "@/lib/dates"
 import {
   GROUP_CODES,
@@ -53,6 +54,8 @@ export default function SpielplanPage() {
 
   useEffect(() => { loadData() }, [user])
 
+  const saveFab = usePredictionSaveFab({ userId: user?.id, onSaved: loadData })
+
   useEffect(() => {
     if (filter === "ko") setGroupFilter("all")
   }, [filter])
@@ -93,7 +96,7 @@ export default function SpielplanPage() {
   return (
     <div className="min-h-screen bg-orendt-gray-50 flex flex-col">
       <Header user={user} currentPage="spielplan" />
-      <main className="flex-1 max-w-3xl mx-auto w-full px-4 sm:px-6 py-10">
+      <main className={`flex-1 max-w-3xl mx-auto w-full px-4 sm:px-6 py-10 ${saveFab.hasPending ? "pb-24" : ""}`}>
         <h1 className="font-display text-3xl font-bold uppercase tracking-tight mb-6">Spielplan</h1>
         <div className="flex gap-2 overflow-x-auto scrollbar-hide mb-4">
           {FILTERS.map((f) => (
@@ -148,6 +151,8 @@ export default function SpielplanPage() {
                     prediction={predictions[m.id]}
                     userId={user.id}
                     onSaved={loadData}
+                    onDirtyChange={saveFab.registerDirtyChange}
+                    batchSaving={saveFab.saving}
                     lockMinutes={lockMinutes}
                   />
                 ))}
@@ -156,6 +161,13 @@ export default function SpielplanPage() {
           ))
         )}
       </main>
+      <PredictionSaveFab
+        hasPending={saveFab.hasPending}
+        pendingCount={saveFab.pendingCount}
+        saveAll={saveFab.saveAll}
+        saving={saveFab.saving}
+        error={saveFab.error}
+      />
       <Footer />
     </div>
   )

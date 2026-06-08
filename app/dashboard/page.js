@@ -10,6 +10,7 @@ import PredictionRow from "@/components/PredictionRow"
 import Leaderboard from "@/components/Leaderboard"
 import OnboardingModal from "@/components/OnboardingModal"
 import { getTodayMatches, getUpcomingMatches, getMyPredictions, getMyRank, getLeaderboard, getPredictionLockMinutes, markOnboardingSeen } from "@/lib/supabase"
+import { usePredictionSaveFab, PredictionSaveFab } from "@/lib/usePredictionSaveFab"
 import { isLocked, getMatchdayKey, formatDate } from "@/lib/dates"
 
 export default function DashboardPage() {
@@ -75,6 +76,8 @@ export default function DashboardPage() {
     loadData()
   }, [loadData])
 
+  const saveFab = usePredictionSaveFab({ userId: user?.id, onSaved: loadData })
+
   const { missingTips, matchdayLabel } = useMemo(() => {
     const tippable = upcoming.filter(
       (m) => m.status === "scheduled" && !isLocked(m.kickoff_at, lockMinutes)
@@ -107,7 +110,7 @@ export default function DashboardPage() {
         onClose={handleCloseOnboarding}
         onGoToGuide={handleGoToGuideFromOnboarding}
       />
-      <main className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 py-10 animate-slide-up">
+      <main className={`flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 py-10 animate-slide-up ${saveFab.hasPending ? "pb-24" : ""}`}>
         <div className="mb-10">
           <p className="font-display text-[11px] font-bold tracking-[0.2em] uppercase text-orendt-gray-500 mb-3">Willkommen zurück</p>
           <h1 className="font-display text-[clamp(2rem,5vw,3rem)] font-bold text-orendt-black uppercase tracking-tight">
@@ -135,6 +138,8 @@ export default function DashboardPage() {
                   prediction={predictions[m.id]}
                   userId={user.id}
                   onSaved={loadData}
+                  onDirtyChange={saveFab.registerDirtyChange}
+                  batchSaving={saveFab.saving}
                   lockMinutes={lockMinutes}
                 />
               ))}
@@ -158,6 +163,13 @@ export default function DashboardPage() {
           <Leaderboard rows={topThree} currentUserId={user.id} compact />
         </section>
       </main>
+      <PredictionSaveFab
+        hasPending={saveFab.hasPending}
+        pendingCount={saveFab.pendingCount}
+        saveAll={saveFab.saveAll}
+        saving={saveFab.saving}
+        error={saveFab.error}
+      />
       <Footer />
     </div>
   )
