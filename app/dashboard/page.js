@@ -9,9 +9,19 @@ import MatchCard from "@/components/MatchCard"
 import PredictionRow from "@/components/PredictionRow"
 import Leaderboard from "@/components/Leaderboard"
 import OnboardingModal from "@/components/OnboardingModal"
+import { LiveDot } from "@/components/TeamBadge"
 import { getTodayMatches, getUpcomingMatches, getMyPredictions, getMyRank, getLeaderboard, getPredictionLockMinutes, markOnboardingSeen } from "@/lib/supabase"
 import { usePredictionSaveFab, PredictionSaveFab } from "@/lib/usePredictionSaveFab"
-import { isLocked, getMatchdayKey, formatDate } from "@/lib/dates"
+import {
+  isLocked,
+  getMatchdayKey,
+  formatDate,
+  getBerlinDayBounds,
+  shouldPollTodayMatches,
+  sortMatchesForToday,
+} from "@/lib/dates"
+
+const POLL_INTERVAL_MS = 45_000
 
 export default function DashboardPage() {
   const { user, loading, refresh } = useAuth()
@@ -23,6 +33,7 @@ export default function DashboardPage() {
   const [topThree, setTopThree] = useState([])
   const [lockMinutes, setLockMinutes] = useState(30)
   const [dataLoading, setDataLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(false)
 
   useEffect(() => {
@@ -51,30 +62,62 @@ export default function DashboardPage() {
     }
   }, [user?.id, refresh])
 
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async ({ silent = false } = {}) => {
     if (!user) return
-    const [todayRes, upcomingRes, predRes, rankRes, lbRes, minutes] = await Promise.all([
-      getTodayMatches(),
-      getUpcomingMatches(),
-      getMyPredictions(user.id),
-      getMyRank(user.id),
-      getLeaderboard(),
-      getPredictionLockMinutes(),
-    ])
-    setTodayMatches(todayRes.data || [])
-    setUpcoming(upcomingRes.data || [])
-    const predMap = {}
-    predRes.data?.forEach((p) => { predMap[p.match_id] = p })
-    setPredictions(predMap)
-    setMyRank(rankRes)
-    setTopThree((lbRes.data || []).slice(0, 3))
-    setLockMinutes(minutes)
-    setDataLoading(false)
+    if (silent) setRefreshing(true)
+
+    try {
+      const [todayRes, upcomingRes, predRes, rankRes, lbRes, minutes] = await Promise.all([
+        getTodayMatches(),
+        getUpcomingMatches(),
+        getMyPredictions(user.id),
+        getMyRank(user.id),
+        getLeaderboard(),
+        getPredictionLockMinutes(),
+      ])
+      setTodayMatches(todayRes.data || [])
+      setUpcoming(upcomingRes.data || [])
+      const predMap = {}
+      predRes.data?.forEach((p) => { predMap[p.match_id] = p })
+      setPredictions(predMap)
+      setMyRank(rankRes)
+      setTopThree((lbRes.data || []).slice(0, 3))
+      setLockMinutes(minutes)
+    } finally {
+      if (!silent) setDataLoading(false)
+      if (silent) setRefreshing(false)
+    }
   }, [user])
 
   useEffect(() => {
     loadData()
   }, [loadData])
+
+  const sortedTodayMatches = useMemo(
+    () => sortMatchesForToday(todayMatches),
+    [todayMatches]
+  )
+
+  const hasLiveGames = useMemo(
+    () => sortedTodayMatches.some((m) => m.status === "live"),
+    [sortedTodayMatches]
+  )
+
+  const todayLabel = useMemo(
+    () => formatDate(getBerlinDayBounds().start),
+    []
+  )
+
+  const shouldPoll = useMemo(
+    () => shouldPollTodayMatches(sortedTodayMatches),
+    [sortedTodayMatches]
+  )
+
+  useEffect(() => {
+    if (!user || dataLoading || !shouldPoll) return
+    const id = setInterval(() => loadData({ silent: true }), POLL_INTERVAL_MS)
+    return () => clearInterval(id)
+  }, [user, dataLoading, shouldPoll, loadData])
 
   const saveFab = usePredictionSaveFab({ userId: user?.id, onSaved: loadData })
 
@@ -124,6 +167,34 @@ export default function DashboardPage() {
           <StatCard label="Exakte Tipps" value={myRank?.exact_hits ?? 0} />
         </div>
 
+        <section className="mb-10">
+          <div className="flex items-center justify-between gap-3 mb-1">
+            <div className="flex items-center gap-2 min-w-0">
+              {hasLiveGames && <LiveDot />}
+              <h2 className="font-display font-bold text-lg uppercase tracking-tight">
+                {hasLiveGames ? "Heute · Live" : "Heute"}
+              </h2>
+            </div>
+            {hasLiveGames && refreshing && (
+              <span className="text-[10px] font-display font-bold uppercase tracking-wider text-orendt-gray-400 shrink-0">
+                Aktualisiert…
+              </span>
+            )}
+          </div>
+          <p className="text-sm text-orendt-gray-500 mb-4">{todayLabel}</p>
+          {sortedTodayMatches.length > 0 ? (
+            <div className="grid gap-3">
+              {sortedTodayMatches.map((m) => (
+                <MatchCard key={m.id} match={m} prediction={predictions[m.id]} />
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white rounded-2xl border border-orendt-gray-200 p-6 text-sm text-orendt-gray-500">
+              Heute keine Spiele.
+            </div>
+          )}
+        </section>
+
         {missingTips.length > 0 && (
           <section className="mb-10">
             <h2 className="font-display font-bold text-lg uppercase tracking-tight mb-1">Tipps fehlen noch</h2>
@@ -142,17 +213,6 @@ export default function DashboardPage() {
                   batchSaving={saveFab.saving}
                   lockMinutes={lockMinutes}
                 />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {todayMatches.length > 0 && (
-          <section className="mb-10">
-            <h2 className="font-display font-bold text-lg uppercase tracking-tight mb-4">Heute</h2>
-            <div className="grid gap-3">
-              {todayMatches.map((m) => (
-                <MatchCard key={m.id} match={m} prediction={predictions[m.id]} />
               ))}
             </div>
           </section>

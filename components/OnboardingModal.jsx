@@ -13,7 +13,7 @@ const KEY_POINTS = [
   {
     icon: Star,
     title: "Weltmeister wählen",
-    text: "Tippe deinen Favoriten für 25 Bonuspunkte — unter Sondertipp, rechtzeitig vor Turnierstart.",
+    text: "Tippe deinen Favoriten für 25 Bonuspunkte — unter Sondertipp, bis zum Turnierstart änderbar.",
   },
   {
     icon: Trophy,

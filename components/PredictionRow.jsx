@@ -47,7 +47,8 @@ export default function PredictionRow({
   const locked = isLocked(match.kickoff_at, lockMinutes)
   const homeName = match.home_team?.name || match.placeholder_home || "TBD"
   const awayName = match.away_team?.name || match.placeholder_away || "TBD"
-  const canReset = !locked && match.status !== "finished" && (prediction || homeTip !== "" || awayTip !== "")
+  const isLive = match.status === "live"
+  const canReset = !locked && match.status !== "finished" && !isLive && (prediction || homeTip !== "" || awayTip !== "")
   const showSavingStatus = saving || batchSaving
 
   useEffect(() => {
@@ -56,7 +57,7 @@ export default function PredictionRow({
   }, [prediction?.home_tip, prediction?.away_tip, match.id])
 
   useEffect(() => {
-    if (!onDirtyChange || locked || match.status === "finished") return
+    if (!onDirtyChange || locked || match.status === "finished" || isLive) return
 
     const parsed = parseTips(homeTip, awayTip)
     const isDirty =
@@ -71,7 +72,7 @@ export default function PredictionRow({
       awayTip: parsed.valid ? parsed.away : null,
       isValid: parsed.valid && isDirty,
     })
-  }, [homeTip, awayTip, prediction, match.id, locked, match.status, onDirtyChange])
+  }, [homeTip, awayTip, prediction, match.id, locked, match.status, isLive, onDirtyChange])
 
   const reset = useCallback(async () => {
     if (locked) return
@@ -96,7 +97,13 @@ export default function PredictionRow({
   const groupCode = getMatchGroupCode(match)
 
   return (
-    <div className="bg-white rounded-2xl border border-orendt-gray-200 p-4 sm:p-5 hover:border-orendt-gray-300 transition-colors">
+    <div
+      className={`rounded-2xl border p-4 sm:p-5 transition-colors ${
+        isLive
+          ? "bg-status-live-bg/40 border-status-live/50"
+          : "bg-white border-orendt-gray-200 hover:border-orendt-gray-300"
+      }`}
+    >
       <div className="flex items-center justify-between mb-4 gap-2">
         <span className="text-[10px] font-display font-bold uppercase tracking-wider text-orendt-gray-400">
           {formatKickoff(match.kickoff_at)}
@@ -119,6 +126,17 @@ export default function PredictionRow({
           {match.status === "finished" ? (
             <div className="font-display text-2xl sm:text-3xl font-bold text-orendt-black">
               {match.home_score} : {match.away_score}
+            </div>
+          ) : isLive ? (
+            <div className="text-center">
+              <div className="font-display text-2xl sm:text-3xl font-bold text-status-live">
+                {match.home_score ?? "–"} : {match.away_score ?? "–"}
+              </div>
+              {prediction && (
+                <p className="text-[11px] text-orendt-gray-500 mt-1">
+                  Dein Tipp: {prediction.home_tip}:{prediction.away_tip}
+                </p>
+              )}
             </div>
           ) : locked ? (
             <div className="text-center">
@@ -193,7 +211,11 @@ export default function PredictionRow({
         <span>
           {match.status === "finished" && prediction?.points != null
             ? `${prediction.points} Punkt${prediction.points !== 1 ? "e" : ""}`
-            : locked
+            : isLive
+              ? prediction
+                ? `Live · Dein Tipp: ${prediction.home_tip}:${prediction.away_tip}`
+                : "Live"
+              : locked
               ? prediction
                 ? `Getippt: ${prediction.home_tip}:${prediction.away_tip} · Tipp-Schluss war ${deadlineLabel}`
                 : `Tipp-Schluss war ${deadlineLabel}`

@@ -206,11 +206,11 @@ export default function AnleitungPage() {
               </li>
               <li className="flex gap-2">
                 <span className="text-orendt-accent font-bold">•</span>
-                Ab Turnierstart ist der Tipp gesperrt — plane rechtzeitig.
+                Bis zum Turnierstart kannst du deinen Weltmeister-Tipp jederzeit ändern.
               </li>
               <li className="flex gap-2">
                 <span className="text-orendt-accent font-bold">•</span>
-                Pro Nutzer ist nur ein Weltmeister-Tipp möglich.
+                Ab Turnierstart ist der Tipp endgültig gesperrt.
               </li>
             </ul>
           </SectionCard>

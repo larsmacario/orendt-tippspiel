@@ -13,6 +13,7 @@ import {
   isTournamentStarted,
   getSettings,
 } from "@/lib/supabase"
+import { formatDate } from "@/lib/dates"
 
 export default function SondertippPage() {
   const { user, loading } = useAuth()
@@ -21,6 +22,7 @@ export default function SondertippPage() {
   const [prediction, setPrediction] = useState(null)
   const [search, setSearch] = useState("")
   const [locked, setLocked] = useState(false)
+  const [tournamentStart, setTournamentStart] = useState(null)
   const [bonus, setBonus] = useState(25)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
@@ -41,7 +43,8 @@ export default function SondertippPage() {
       ])
       setTeams(teamsRes.data || [])
       setPrediction(predRes.data)
-      setLocked(started || !!predRes.data)
+      setLocked(started)
+      setTournamentStart(settings.tournament_start || null)
       setBonus(parseInt(settings.champion_bonus || "25", 10))
       setDataLoading(false)
     }
@@ -55,10 +58,7 @@ export default function SondertippPage() {
     const { data, error: err } = await upsertChampionPrediction(user.id, teamId)
     setSaving(false)
     if (err) setError(err.message)
-    else {
-      setPrediction(data)
-      setLocked(true)
-    }
+    else setPrediction(data)
   }
 
   const filtered = teams.filter((t) =>
@@ -81,6 +81,9 @@ export default function SondertippPage() {
         <h1 className="font-display text-3xl font-bold uppercase tracking-tight mb-2">Weltmeister-Tipp</h1>
         <p className="text-sm text-orendt-gray-500 mb-8">
           Wähle deinen WM-Sieger vor Turnierstart. Richtig getippt: +{bonus} Bonuspunkte.
+          {!locked && tournamentStart && (
+            <> Änderbar bis {formatDate(tournamentStart)}.</>
+          )}
         </p>
 
         {prediction && (
@@ -89,6 +92,9 @@ export default function SondertippPage() {
             <div>
               <p className="text-[10px] font-display font-bold uppercase tracking-wider text-orendt-gray-400">Dein Tipp</p>
               <p className="font-display font-bold text-xl text-orendt-black">{prediction.team?.name}</p>
+              {!locked && (
+                <p className="text-xs text-orendt-gray-500 mt-1">Du kannst deinen Tipp bis zum Turnierstart ändern.</p>
+              )}
             </div>
           </div>
         )}
@@ -99,8 +105,19 @@ export default function SondertippPage() {
           </div>
         )}
 
+        {locked && prediction && (
+          <div className="bg-white rounded-2xl border border-orendt-gray-200 p-6 text-orendt-gray-500 text-sm">
+            Das Turnier hat begonnen – dein Sondertipp ist gesperrt.
+          </div>
+        )}
+
         {!locked && (
           <>
+            {prediction && (
+              <p className="font-display font-bold text-sm uppercase tracking-tight text-orendt-gray-600 mb-4">
+                Anderes Team wählen
+              </p>
+            )}
             <input
               type="search"
               value={search}
@@ -109,17 +126,24 @@ export default function SondertippPage() {
               className="w-full px-5 py-3.5 bg-white border border-orendt-gray-200 rounded-2xl mb-6 outline-none focus:border-orendt-black"
             />
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {filtered.map((team) => (
-                <button
-                  key={team.id}
-                  onClick={() => selectTeam(team.id)}
-                  disabled={saving}
-                  className="bg-white rounded-2xl border border-orendt-gray-200 p-4 flex flex-col items-center gap-2 hover:border-orendt-black transition-colors disabled:opacity-50"
-                >
-                  <TeamBadge team={team} size={40} />
-                  <span className="font-display font-bold text-xs text-center">{team.name}</span>
-                </button>
-              ))}
+              {filtered.map((team) => {
+                const isSelected = prediction?.team_id === team.id
+                return (
+                  <button
+                    key={team.id}
+                    onClick={() => selectTeam(team.id)}
+                    disabled={saving}
+                    className={`bg-white rounded-2xl border p-4 flex flex-col items-center gap-2 transition-colors disabled:opacity-50 ${
+                      isSelected
+                        ? "border-orendt-accent ring-2 ring-orendt-accent/30"
+                        : "border-orendt-gray-200 hover:border-orendt-black"
+                    }`}
+                  >
+                    <TeamBadge team={team} size={40} />
+                    <span className="font-display font-bold text-xs text-center">{team.name}</span>
+                  </button>
+                )
+              })}
             </div>
           </>
         )}

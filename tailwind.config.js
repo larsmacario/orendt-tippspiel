@@ -49,6 +49,7 @@ module.exports = {
         "fade-in": "fadeIn 0.4s ease forwards",
         "slide-up": "slideUp 0.4s ease forwards",
         "scale-in": "scaleIn 0.5s ease forwards",
+        "live-pulse": "livePulse 1.5s ease-in-out infinite",
       },
       keyframes: {
         fadeIn: {
@@ -62,6 +63,10 @@ module.exports = {
         scaleIn: {
           from: { transform: "scale(0.9)", opacity: "0" },
           to: { transform: "scale(1)", opacity: "1" },
+        },
+        livePulse: {
+          "0%, 100%": { opacity: "1", transform: "scale(1)" },
+          "50%": { opacity: "0.5", transform: "scale(0.85)" },
         },
       },
     },

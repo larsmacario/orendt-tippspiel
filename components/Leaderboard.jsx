@@ -39,9 +39,21 @@ export default function Leaderboard({ rows, currentUserId, compact = false }) {
                 <span className="hidden sm:block text-sm text-orendt-gray-600">{row.exact_hits}</span>
               )}
               {!compact && (
-                <div className="hidden sm:flex items-center gap-1 min-w-0">
-                  {row.champion_badge_url ? (
-                    <TeamBadge team={{ badge_url: row.champion_badge_url, name: row.champion_team_name }} size={20} />
+                <div className="hidden sm:flex items-center gap-1.5 min-w-0">
+                  {row.champion_team_name || row.champion_badge_url ? (
+                    <>
+                      {row.champion_badge_url && (
+                        <TeamBadge
+                          team={{ badge_url: row.champion_badge_url, name: row.champion_team_name }}
+                          size={20}
+                        />
+                      )}
+                      {row.champion_team_name && (
+                        <span className="text-xs text-orendt-gray-600 truncate">
+                          {row.champion_team_name}
+                        </span>
+                      )}
+                    </>
                   ) : (
                     <span className="text-xs text-orendt-gray-400">–</span>
                   )}
