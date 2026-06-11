@@ -6,7 +6,7 @@ export const metadata = {
 
 export default function ScreenLayout({ children }) {
   return (
-    <div className="h-screen min-h-screen h-dvh w-screen overflow-hidden bg-orendt-black text-orendt-white cursor-none select-none">
+    <div className="flex h-screen min-h-screen h-dvh w-screen flex-col overflow-hidden bg-orendt-black text-orendt-white cursor-none select-none">
       {children}
     </div>
   )

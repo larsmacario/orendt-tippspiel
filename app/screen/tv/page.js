@@ -1,3 +1,4 @@
+import ScreenTvKioskLoader from "@/components/screen/ScreenTvKioskLoader"
 import { loadScreenData } from "@/lib/screen-data"
 import { buildScreenTvPayload, SCREEN_TV_SLIDE_IDS } from "@/lib/screen-tv-html"
 import "./screen-tv.css"
@@ -27,54 +28,58 @@ export default async function ScreenTvPage() {
   }
 
   return (
-    <div
-      className="screen-tv-app"
-      data-has-live={payload.hasLive ? "1" : "0"}
-      data-slide-count={SCREEN_TV_SLIDE_IDS.length}
-    >
-      <header className="screen-tv-header">
-        <div className="screen-tv-brand">
-          <span className="screen-tv-title">FIFA WM 2026</span>
-          <span className="screen-tv-sep">|</span>
-          <span className="screen-tv-subtitle">Orendt Studios</span>
-        </div>
-        <div className="screen-tv-updated" id="screen-tv-updated">
-          Aktualisiert {payload.updatedAtFormatted}
-        </div>
-      </header>
-
+    <>
       <div
-        id="screen-tv-ticker"
-        dangerouslySetInnerHTML={{ __html: payload.tickerHtml }}
-      />
+        className="screen-tv-app"
+        data-has-live={payload.hasLive ? "1" : "0"}
+        data-slide-count={SCREEN_TV_SLIDE_IDS.length}
+        style={{ "--tv-progress": "0%" }}
+        suppressHydrationWarning
+      >
+        <header className="screen-tv-header">
+          <div className="screen-tv-brand">
+            <span className="screen-tv-title">FIFA WM 2026</span>
+            <span className="screen-tv-sep">|</span>
+            <span className="screen-tv-subtitle">Orendt Studios</span>
+          </div>
+          <div className="screen-tv-updated" id="screen-tv-updated" suppressHydrationWarning>
+            Aktualisiert {payload.updatedAtFormatted}
+          </div>
+        </header>
 
-      <main className="screen-tv-main" id="screen-tv-main">
-        {payload.slides.map((slide, index) => (
-          <section
-            key={slide.id}
-            className={`screen-tv-slide${index === 0 ? " is-active" : ""}`}
-            data-slide={slide.id}
-            dangerouslySetInnerHTML={{ __html: slide.html }}
-          />
-        ))}
-      </main>
+        <div
+          id="screen-tv-ticker"
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{ __html: payload.tickerHtml }}
+        />
 
-      <footer className="screen-tv-footer">
-        <div className="screen-tv-dots" id="screen-tv-dots">
+        <main className="screen-tv-main" id="screen-tv-main" suppressHydrationWarning>
           {payload.slides.map((slide, index) => (
-            <span
+            <section
               key={slide.id}
-              className={`screen-tv-dot${index === 0 ? " is-active" : ""}`}
-              data-dot={slide.id}
+              className={`screen-tv-slide${index === 0 ? " is-active" : ""}`}
+              data-slide={slide.id}
+              suppressHydrationWarning
+              dangerouslySetInnerHTML={{ __html: slide.html }}
             />
           ))}
-        </div>
-        <div className="screen-tv-progress-track">
-          <div className="screen-tv-progress-bar" id="screen-tv-progress" />
-        </div>
-      </footer>
+        </main>
 
-      <script src="/screen-kiosk.js" defer />
-    </div>
+        <footer className="screen-tv-footer" suppressHydrationWarning>
+          <div className="screen-tv-dots" id="screen-tv-dots">
+            {payload.slides.map((slide, index) => (
+              <span
+                key={slide.id}
+                className={`screen-tv-dot${index === 0 ? " is-active" : ""}`}
+                data-dot={slide.id}
+              />
+            ))}
+          </div>
+          <div className="screen-tv-progress-track" aria-hidden="true" />
+        </footer>
+      </div>
+
+      <ScreenTvKioskLoader />
+    </>
   )
 }

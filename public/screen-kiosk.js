@@ -5,106 +5,150 @@
   var POLL_INTERVAL_MS = 45000;
   var POLL_INTERVAL_LIVE_MS = 30000;
   var TICK_MS = 100;
-  var FADE_MS = 300;
 
-  var app = document.querySelector(".screen-tv-app");
-  if (!app || app.classList.contains("screen-tv-error")) return;
+  function destroyKiosk() {
+    var state = window.__screenTvKiosk;
+    if (!state) return;
 
-  var slides = Array.prototype.slice.call(document.querySelectorAll(".screen-tv-slide"));
-  var dots = Array.prototype.slice.call(document.querySelectorAll(".screen-tv-dot"));
-  var progressBar = document.getElementById("screen-tv-progress");
-  var tickerEl = document.getElementById("screen-tv-ticker");
-  var updatedEl = document.getElementById("screen-tv-updated");
+    if (state.carouselTimer) clearInterval(state.carouselTimer);
+    if (state.pollTimer) clearInterval(state.pollTimer);
 
-  if (!slides.length) return;
-
-  var slideIndex = 0;
-  var elapsed = 0;
-  var pollTimer = null;
-  var carouselTimer = null;
-  var hasLive = app.getAttribute("data-has-live") === "1";
-
-  function setActiveSlide(index) {
-    for (var i = 0; i < slides.length; i++) {
-      slides[i].classList.remove("is-active", "is-fading");
-      if (dots[i]) dots[i].classList.remove("is-active");
+    if (state.app) {
+      state.app.removeAttribute("data-kiosk-init");
     }
-    slideIndex = index;
-    slides[slideIndex].classList.add("is-active");
-    if (dots[slideIndex]) dots[slideIndex].classList.add("is-active");
-    if (progressBar) progressBar.style.width = "0%";
-    elapsed = 0;
+
+    window.__screenTvKiosk = null;
   }
 
-  function nextSlide() {
-    var current = slides[slideIndex];
-    if (current) current.classList.add("is-fading");
-    setTimeout(function () {
-      setActiveSlide((slideIndex + 1) % slides.length);
-    }, FADE_MS);
-  }
+  function bootScreenTvKiosk() {
+    var app = document.querySelector(".screen-tv-app");
+    if (!app || app.classList.contains("screen-tv-error")) return false;
 
-  function startCarousel() {
-    if (carouselTimer) clearInterval(carouselTimer);
-    elapsed = 0;
-    carouselTimer = setInterval(function () {
-      elapsed += TICK_MS;
-      if (progressBar) {
-        progressBar.style.width = Math.min((elapsed / SLIDE_DURATION_MS) * 100, 100) + "%";
-      }
-      if (elapsed >= SLIDE_DURATION_MS) {
-        nextSlide();
-      }
-    }, TICK_MS);
-  }
+    destroyKiosk();
 
-  function updateSlidesFromPayload(payload) {
-    if (!payload || !payload.slides) return;
+    var slides = Array.prototype.slice.call(document.querySelectorAll(".screen-tv-slide"));
+    var dots = Array.prototype.slice.call(document.querySelectorAll(".screen-tv-dot"));
+    var progressTrack = app.querySelector(".screen-tv-progress-track");
+    var tickerEl = document.getElementById("screen-tv-ticker");
+    var updatedEl = document.getElementById("screen-tv-updated");
 
-    hasLive = !!payload.hasLive;
-    app.setAttribute("data-has-live", hasLive ? "1" : "0");
+    if (!slides.length) return false;
 
-    if (updatedEl && payload.updatedAtFormatted) {
-      updatedEl.textContent = "Aktualisiert " + payload.updatedAtFormatted;
+    app.setAttribute("data-kiosk-init", "1");
+
+    var state = {
+      app: app,
+      slides: slides,
+      dots: dots,
+      progressTrack: progressTrack,
+      tickerEl: tickerEl,
+      updatedEl: updatedEl,
+      slideIndex: 0,
+      elapsed: 0,
+      pollTimer: null,
+      carouselTimer: null,
+      hasLive: app.getAttribute("data-has-live") === "1",
+    };
+
+    window.__screenTvKiosk = state;
+
+    function setProgress(pct) {
+      var value = pct + "%";
+      app.style.setProperty("--tv-progress", value);
+      if (progressTrack) progressTrack.style.setProperty("--tv-progress", value);
     }
 
-    if (tickerEl) {
-      tickerEl.innerHTML = payload.tickerHtml || "";
-    }
-
-    for (var i = 0; i < payload.slides.length; i++) {
-      var item = payload.slides[i];
-      var slideEl = slides[i];
-      if (slideEl && item && item.html != null) {
-        slideEl.innerHTML = item.html;
+    function setActiveSlide(index) {
+      for (var i = 0; i < slides.length; i++) {
+        slides[i].classList.remove("is-active");
+        if (dots[i]) dots[i].classList.remove("is-active");
       }
+      state.slideIndex = index;
+      slides[state.slideIndex].classList.add("is-active");
+      if (dots[state.slideIndex]) dots[state.slideIndex].classList.add("is-active");
+      setProgress(0);
+      state.elapsed = 0;
     }
 
+    function nextSlide() {
+      setActiveSlide((state.slideIndex + 1) % slides.length);
+    }
+
+    function startCarousel() {
+      if (state.carouselTimer) clearInterval(state.carouselTimer);
+      state.elapsed = 0;
+      setProgress(0);
+      state.carouselTimer = setInterval(function () {
+        state.elapsed += TICK_MS;
+        setProgress(Math.min((state.elapsed / SLIDE_DURATION_MS) * 100, 100));
+        if (state.elapsed >= SLIDE_DURATION_MS) {
+          nextSlide();
+        }
+      }, TICK_MS);
+    }
+
+    function updateSlidesFromPayload(payload) {
+      if (!payload || !payload.slides) return;
+
+      state.hasLive = !!payload.hasLive;
+      app.setAttribute("data-has-live", state.hasLive ? "1" : "0");
+
+      if (updatedEl && payload.updatedAtFormatted) {
+        updatedEl.textContent = "Aktualisiert " + payload.updatedAtFormatted;
+      }
+
+      if (tickerEl) {
+        tickerEl.innerHTML = payload.tickerHtml || "";
+      }
+
+      for (var i = 0; i < payload.slides.length; i++) {
+        var item = payload.slides[i];
+        var slideEl = slides[i];
+        if (slideEl && item && item.html != null) {
+          slideEl.innerHTML = item.html;
+        }
+      }
+
+      schedulePoll();
+    }
+
+    function fetchUpdate() {
+      if (typeof fetch !== "function") return;
+
+      fetch("/api/screen/tv/render")
+        .then(function (res) {
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          return res.json();
+        })
+        .then(function (payload) {
+          updateSlidesFromPayload(payload);
+        })
+        .catch(function () {
+          /* Beim Poll-Fehler letzte Anzeige beibehalten */
+        });
+    }
+
+    function schedulePoll() {
+      if (state.pollTimer) clearInterval(state.pollTimer);
+      state.pollTimer = setInterval(
+        fetchUpdate,
+        state.hasLive ? POLL_INTERVAL_LIVE_MS : POLL_INTERVAL_MS
+      );
+    }
+
+    setActiveSlide(0);
+    startCarousel();
     schedulePoll();
+
+    return true;
   }
 
-  function fetchUpdate() {
-    if (typeof fetch !== "function") return;
+  window.__screenTvKioskBoot = bootScreenTvKiosk;
+  window.__screenTvKioskDestroy = destroyKiosk;
 
-    fetch("/api/screen/tv/render")
-      .then(function (res) {
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        return res.json();
-      })
-      .then(function (payload) {
-        updateSlidesFromPayload(payload);
-      })
-      .catch(function () {
-        /* Beim Poll-Fehler letzte Anzeige beibehalten */
-      });
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", bootScreenTvKiosk);
+  } else {
+    bootScreenTvKiosk();
   }
-
-  function schedulePoll() {
-    if (pollTimer) clearInterval(pollTimer);
-    pollTimer = setInterval(fetchUpdate, hasLive ? POLL_INTERVAL_LIVE_MS : POLL_INTERVAL_MS);
-  }
-
-  setActiveSlide(0);
-  startCarousel();
-  schedulePoll();
 })();
