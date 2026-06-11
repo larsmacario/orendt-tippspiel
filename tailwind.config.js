@@ -50,6 +50,7 @@ module.exports = {
         "slide-up": "slideUp 0.4s ease forwards",
         "scale-in": "scaleIn 0.5s ease forwards",
         "live-pulse": "livePulse 1.5s ease-in-out infinite",
+        "ticker-marquee": "tickerMarquee 28s linear infinite",
       },
       keyframes: {
         fadeIn: {
@@ -67,6 +68,10 @@ module.exports = {
         livePulse: {
           "0%, 100%": { opacity: "1", transform: "scale(1)" },
           "50%": { opacity: "0.5", transform: "scale(0.85)" },
+        },
+        tickerMarquee: {
+          "0%": { transform: "translateX(0)" },
+          "100%": { transform: "translateX(-50%)" },
         },
       },
     },

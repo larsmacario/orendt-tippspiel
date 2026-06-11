@@ -6,6 +6,7 @@ import ScheduleSlide from "./slides/ScheduleSlide"
 import ResultsSlide from "./slides/ResultsSlide"
 import TimelineSlide from "./slides/TimelineSlide"
 import TablesSlide from "./slides/TablesSlide"
+import ScreenNewsTicker from "./ScreenNewsTicker"
 
 const SLIDE_DURATION_MS = 22_000
 const POLL_INTERVAL_MS = 45_000
@@ -137,6 +138,8 @@ export default function ScreenCarousel() {
           Aktualisiert {formatUpdatedAt(data.updatedAt)}
         </div>
       </header>
+
+      <ScreenNewsTicker data={data} />
 
       <main
         className={`flex-1 min-h-0 transition-opacity duration-300 ${fading ? "opacity-0" : "opacity-100"}`}
