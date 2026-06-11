@@ -41,6 +41,26 @@ export async function fetchLiveScores(apiKey: string) {
   return data?.livescore || data?.events || []
 }
 
+export async function fetchLeagueLivescore(apiKey: string, leagueId: string) {
+  const data = await sportsDbFetch(`/livescore/${leagueId}`, apiKey)
+  return data?.livescore || data?.events || []
+}
+
+export async function fetchNextEvents(apiKey: string, leagueId: string) {
+  const data = await sportsDbFetch(`/schedule/next/league/${leagueId}`, apiKey)
+  return data?.schedule || data?.events || []
+}
+
+export async function fetchPreviousEvents(apiKey: string, leagueId: string) {
+  const data = await sportsDbFetch(`/schedule/previous/league/${leagueId}`, apiKey)
+  return data?.schedule || data?.events || []
+}
+
+export async function fetchEventTimeline(apiKey: string, eventId: string) {
+  const data = await sportsDbFetch(`/lookup/event_timeline/${eventId}`, apiKey)
+  return data?.timeline || data?.lookup || data?.event || []
+}
+
 export function mapStatus(raw: string | null | undefined): "scheduled" | "live" | "finished" {
   const s = (raw || "").toLowerCase()
   if (s.includes("finished") || s.includes("ft") || s.includes("aet") || s.includes("pen")) return "finished"
