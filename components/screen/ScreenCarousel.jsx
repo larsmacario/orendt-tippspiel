@@ -1,11 +1,11 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import LiveSlide from "./slides/LiveSlide"
 import ScheduleSlide from "./slides/ScheduleSlide"
 import ResultsSlide from "./slides/ResultsSlide"
 import TimelineSlide from "./slides/TimelineSlide"
 import TablesSlide from "./slides/TablesSlide"
+import LeaderboardSlide from "./slides/LeaderboardSlide"
 import ScreenNewsTicker from "./ScreenNewsTicker"
 
 const SLIDE_DURATION_MS = 22_000
@@ -23,7 +23,7 @@ function formatUpdatedAt(iso) {
 
 function buildSlides(data) {
   const slides = [
-    { id: "live", component: LiveSlide, props: { live: data.live } },
+    { id: "leaderboard", component: LeaderboardSlide, props: { leaderboard: data.leaderboard || [] } },
     { id: "upcoming", component: ScheduleSlide, props: { upcoming: data.upcoming } },
     { id: "tables", component: TablesSlide, props: { tables: data.tables || [] } },
     { id: "recap", component: TimelineSlide, props: { timelines: data.timelines || [] } },

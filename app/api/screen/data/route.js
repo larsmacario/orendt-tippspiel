@@ -1,7 +1,16 @@
 import { fetchScreenData } from "@/lib/sportsdb-display"
+import { fetchScreenLeaderboard } from "@/lib/screen-leaderboard"
 
 const CACHE_TTL_MS = 45_000
 let cache = { data: null, expiresAt: 0 }
+
+async function loadScreenData() {
+  const [sports, leaderboard] = await Promise.all([
+    fetchScreenData(),
+    fetchScreenLeaderboard(10),
+  ])
+  return { ...sports, leaderboard }
+}
 
 export async function GET() {
   try {
@@ -14,7 +23,7 @@ export async function GET() {
       })
     }
 
-    const data = await fetchScreenData()
+    const data = await loadScreenData()
     cache = { data, expiresAt: now + CACHE_TTL_MS }
 
     return Response.json(data, {
