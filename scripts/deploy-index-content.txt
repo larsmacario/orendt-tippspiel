@@ -1,0 +1,467 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0"
+
+const BASE_URL = "https://www.thesportsdb.com/api/v2/json"
+
+function getConfig() {
+  const apiKey = Deno.env.get("SPORTSDB_API_KEY") || ""
+  const leagueId = Deno.env.get("SPORTSDB_LEAGUE_ID") || "4429"
+  const season = Deno.env.get("SPORTSDB_SEASON") || "2026"
+  return { apiKey, leagueId, season }
+}
+
+async function sportsDbFetch(path: string, apiKey: string) {
+  const res = await fetch(`${BASE_URL}${path}`, {
+    headers: {
+      "X-API-KEY": apiKey,
+      Accept: "application/json",
+    },
+  })
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`TheSportsDB ${res.status}: ${text}`)
+  }
+  return res.json()
+}
+
+async function fetchTeams(apiKey: string, leagueId: string) {
+  const data = await sportsDbFetch(`/list/teams/${leagueId}`, apiKey)
+  return data?.list || data?.teams || []
+}
+
+async function fetchSeasons(apiKey: string, leagueId: string) {
+  const data = await sportsDbFetch(`/list/seasons/${leagueId}`, apiKey)
+  return data?.list || data?.seasons || []
+}
+
+async function fetchSchedule(apiKey: string, leagueId: string, season: string) {
+  const data = await sportsDbFetch(`/schedule/league/${leagueId}/${encodeURIComponent(season)}`, apiKey)
+  return data?.schedule || data?.events || []
+}
+
+async function fetchLiveScores(apiKey: string) {
+  const data = await sportsDbFetch("/livescore/soccer", apiKey)
+  return data?.livescore || data?.events || []
+}
+
+async function fetchLeagueLivescore(apiKey: string, leagueId: string) {
+  const data = await sportsDbFetch(`/livescore/${leagueId}`, apiKey)
+  return data?.livescore || data?.events || []
+}
+
+async function fetchNextEvents(apiKey: string, leagueId: string) {
+  const data = await sportsDbFetch(`/schedule/next/league/${leagueId}`, apiKey)
+  return data?.schedule || data?.events || []
+}
+
+async function fetchPreviousEvents(apiKey: string, leagueId: string) {
+  const data = await sportsDbFetch(`/schedule/previous/league/${leagueId}`, apiKey)
+  return data?.schedule || data?.events || []
+}
+
+async function fetchEventTimeline(apiKey: string, eventId: string) {
+  const data = await sportsDbFetch(`/lookup/event_timeline/${eventId}`, apiKey)
+  return data?.timeline || data?.lookup || data?.event || []
+}
+
+function mapStatus(raw: string | null | undefined): "scheduled" | "live" | "finished" {
+  const s = (raw || "").toLowerCase()
+  if (s.includes("finished") || s.includes("ft") || s.includes("aet") || s.includes("pen")) return "finished"
+  if (s.includes("live") || s.includes("1h") || s.includes("2h") || s.includes("ht") || s.includes("et") || s.includes("pen")) return "live"
+  if (s.includes("not started") || s.includes("ns") || s.includes("scheduled") || s === "") return "scheduled"
+  return "scheduled"
+}
+
+function mapPhase(strRound: string | null | undefined, strGroup: string | null | undefined): string {
+  const r = (strRound || strGroup || "").toLowerCase()
+  if (r.includes("group") || /^group [a-l]$/i.test(strRound || "")) return "group"
+  if (r.includes("round of 32") || r.includes("32")) return "r32"
+  if (r.includes("round of 16") || r.includes("8th") || r.includes("last 16")) return "r16"
+  if (r.includes("quarter")) return "qf"
+  if (r.includes("semi")) return "sf"
+  if (r.includes("3rd") || r.includes("third")) return "final3"
+  if (r.includes("final")) return "final"
+  return "group"
+}
+
+/** Offizielle WM-2026-Gruppen (Auslosung 05.12.2025) */
+const TEAM_GROUP: Record<string, string> = {
+  Mexico: "A", "South Africa": "A", "South Korea": "A", "Czech Republic": "A",
+  Canada: "B", Switzerland: "B", Qatar: "B", "Bosnia-Herzegovina": "B",
+  Brazil: "C", Morocco: "C", Scotland: "C", Haiti: "C",
+  USA: "D", Paraguay: "D", Australia: "D", Turkey: "D",
+  Germany: "E", Ecuador: "E", "Ivory Coast": "E", "Curaçao": "E",
+  Netherlands: "F", Japan: "F", Tunisia: "F", Sweden: "F",
+  Belgium: "G", Iran: "G", Egypt: "G", "New Zealand": "G",
+  Spain: "H", Uruguay: "H", "Saudi Arabia": "H", "Cape Verde": "H",
+  France: "I", Senegal: "I", Norway: "I", Iraq: "I",
+  Argentina: "J", Austria: "J", Algeria: "J", Jordan: "J",
+  Portugal: "K", Colombia: "K", Uzbekistan: "K", "DR Congo": "K",
+  England: "L", Croatia: "L", Panama: "L", Ghana: "L",
+}
+
+function lookupTeamGroup(teamName: string | null | undefined): string | null {
+  if (!teamName) return null
+  return TEAM_GROUP[teamName] || null
+}
+
+function extractGroupCode(strGroup: string | null | undefined, strRound: string | null | undefined): string | null {
+  const source = strGroup || strRound || ""
+  const match = source.match(/group\s*([A-L])/i) || source.match(/^([A-L])$/i)
+  return match ? match[1].toUpperCase() : null
+}
+
+function resolveGroupCode(
+  strGroup: string | null | undefined,
+  strRound: string | null | undefined,
+  teamName?: string | null
+): string | null {
+  return extractGroupCode(strGroup, strRound) || lookupTeamGroup(teamName)
+}
+
+function parseKickoff(dateEvent: string, strTime: string | null | undefined): string {
+  const time = strTime && strTime !== "00:00:00" ? strTime : "12:00:00"
+  const iso = `${dateEvent}T${time}Z`
+  return new Date(iso).toISOString()
+}
+
+function parseScore(value: string | number | null | undefined): number | null {
+  if (value === null || value === undefined || value === "") return null
+  const n = parseInt(String(value), 10)
+  return isNaN(n) ? null : n
+}
+
+function parseEventScores(event: Record<string, string | number | null | undefined>) {
+  return {
+    homeScore: parseScore(event.intHomeScore ?? event.intScoreHome),
+    awayScore: parseScore(event.intAwayScore ?? event.intScoreAway),
+  }
+}
+
+const COUNTRY_FLAGS: Record<string, string> = {
+  Germany: "🇩🇪", France: "🇫🇷", Spain: "🇪🇸", Italy: "🇮🇹", England: "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
+  Brazil: "🇧🇷", Argentina: "🇦🇷", Portugal: "🇵🇹", Netherlands: "🇳🇱", Belgium: "🇧🇪",
+  USA: "🇺🇸", Mexico: "🇲🇽", Canada: "🇨🇦", Japan: "🇯🇵", "South Korea": "🇰🇷",
+}
+
+function countryToEmoji(country: string | null | undefined): string | null {
+  if (!country) return null
+  return COUNTRY_FLAGS[country] || null
+}
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+}
+
+function getSupabaseAdmin() {
+  return createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  )
+}
+
+async function startLog(supabase: ReturnType<typeof getSupabaseAdmin>, source: string, mode: string) {
+  const { data } = await supabase
+    .from("tip_sync_log")
+    .insert({ source, mode, status: "success", matches_updated: 0 })
+    .select("id")
+    .single()
+  return data?.id
+}
+
+async function finishLog(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+  logId: string | undefined,
+  status: string,
+  matchesUpdated: number,
+  errorMessage?: string
+) {
+  if (!logId) return
+  await supabase
+    .from("tip_sync_log")
+    .update({
+      finished_at: new Date().toISOString(),
+      status,
+      matches_updated: matchesUpdated,
+      error_message: errorMessage || null,
+    })
+    .eq("id", logId)
+}
+
+async function syncTeams(supabase: ReturnType<typeof getSupabaseAdmin>, apiKey: string, leagueId: string) {
+  const teams = await fetchTeams(apiKey, leagueId)
+  if (!teams.length) {
+    throw new Error(`TheSportsDB lieferte 0 Teams für Liga ${leagueId}. API-Pfad oder Liga-ID prüfen.`)
+  }
+
+  let updated = 0
+  let lastError: string | null = null
+  for (let i = 0; i < teams.length; i++) {
+    const t = teams[i]
+    const externalId = String(t.idTeam || t.id)
+    const groupCode = resolveGroupCode(t.strGroup, t.strLeague, t.strTeam || t.strTeamShort)
+    const { error } = await supabase.from("tip_teams").upsert(
+      {
+        external_id: externalId,
+        name: t.strTeam || t.strTeamShort,
+        code: t.strTeamShort?.slice(0, 3)?.toUpperCase() || null,
+        badge_url: t.strBadge || t.strTeamBadge || null,
+        flag_url: t.strTeamLogo || null,
+        flag_emoji: countryToEmoji(t.strCountry),
+        group_code: groupCode,
+        sort_order: i,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "external_id" }
+    )
+    if (error) lastError = error.message
+    else updated++
+  }
+
+  if (updated === 0 && lastError) {
+    throw new Error(`Teams konnten nicht gespeichert werden: ${lastError}`)
+  }
+  return updated
+}
+
+async function resolveSchedule(apiKey: string, leagueId: string, season: string) {
+  const preferred = await fetchSchedule(apiKey, leagueId, season)
+  if (preferred.length) return { events: preferred, seasonUsed: season }
+
+  const seasons = await fetchSeasons(apiKey, leagueId)
+  const seasonNames = seasons
+    .map((s: Record<string, string>) => s.strSeason || s.season || s.name)
+    .filter(Boolean)
+
+  for (const candidate of seasonNames) {
+    if (candidate === season) continue
+    const events = await fetchSchedule(apiKey, leagueId, String(candidate))
+    if (events.length) return { events, seasonUsed: String(candidate) }
+  }
+
+  const fallbacks = ["2026", "2025-2026", "2025"]
+  for (const candidate of fallbacks) {
+    if (candidate === season) continue
+    const events = await fetchSchedule(apiKey, leagueId, candidate)
+    if (events.length) return { events, seasonUsed: candidate }
+  }
+
+  return { events: [] as Record<string, string>[], seasonUsed: season }
+}
+
+async function syncSchedule(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+  apiKey: string,
+  leagueId: string,
+  season: string
+) {
+  const { events, seasonUsed } = await resolveSchedule(apiKey, leagueId, season)
+  const previousEvents = await fetchPreviousEvents(apiKey, leagueId)
+  const allEvents = dedupeEvents([...events, ...previousEvents])
+  if (!allEvents.length) {
+    throw new Error(`TheSportsDB lieferte 0 Spiele für Liga ${leagueId}, Saison ${season}. Verfügbare Saisons prüfen.`)
+  }
+
+  const { data: teamRows } = await supabase.from("tip_teams").select("id, external_id, group_code")
+  const teamMap: Record<string, string> = {}
+  const teamGroupMap: Record<string, string> = {}
+  teamRows?.forEach((t) => {
+    if (t.external_id) teamMap[t.external_id] = t.id
+    if (t.id && t.group_code) teamGroupMap[t.id] = t.group_code
+  })
+
+  let updated = 0
+  let lastError: string | null = null
+  for (let i = 0; i < allEvents.length; i++) {
+    const e = allEvents[i]
+    const externalId = String(e.idEvent || e.id)
+    const { data: existing } = await supabase
+      .from("tip_matches")
+      .select("manual_override")
+      .eq("external_id", externalId)
+      .maybeSingle()
+
+    if (existing?.manual_override) continue
+
+    const homeTeamId = e.idHomeTeam ? teamMap[String(e.idHomeTeam)] : null
+    const awayTeamId = e.idAwayTeam ? teamMap[String(e.idAwayTeam)] : null
+    const status = mapStatus(e.strStatus || e.strProgress)
+    const { homeScore, awayScore } = parseEventScores(e)
+
+    const { error } = await supabase.from("tip_matches").upsert(
+      {
+        external_id: externalId,
+        phase: mapPhase(e.strRound, e.strGroup),
+        group_code:
+          resolveGroupCode(e.strGroup, e.strRound, e.strHomeTeam)
+          || (homeTeamId ? teamGroupMap[homeTeamId] : null)
+          || lookupTeamGroup(e.strHomeTeam),
+        home_team_id: homeTeamId,
+        away_team_id: awayTeamId,
+        placeholder_home: e.strHomeTeam || null,
+        placeholder_away: e.strAwayTeam || null,
+        kickoff_at: parseKickoff(e.dateEvent, e.strTime || e.strTimeLocal),
+        home_score: homeScore,
+        away_score: awayScore,
+        status,
+        raw_status: e.strStatus || null,
+        venue: e.strVenue || null,
+        last_synced_at: new Date().toISOString(),
+        sort_order: i,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "external_id" }
+    )
+    if (!error) updated++
+    else lastError = error.message
+  }
+
+  if (updated === 0 && lastError) {
+    throw new Error(`Spiele konnten nicht gespeichert werden: ${lastError}`)
+  }
+
+  if (seasonUsed !== season) {
+    console.log(`Schedule: Saison ${season} leer, verwendet ${seasonUsed}`)
+  }
+  return updated
+}
+
+function dedupeEvents(events: Record<string, string>[]) {
+  const byId = new Map<string, Record<string, string>>()
+  for (const event of events) {
+    const externalId = String(event.idEvent || event.id || "")
+    if (!externalId) continue
+    byId.set(externalId, event)
+  }
+  return [...byId.values()]
+}
+
+function isWorldCupEvent(event: Record<string, string>, leagueId: string) {
+  return (
+    String(event.idLeague || event.idLeagueSeason || "") === leagueId
+    || String(event.strLeague || "").toLowerCase().includes("world cup")
+  )
+}
+
+async function applyEventResults(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+  events: Record<string, string>[]
+) {
+  let updated = 0
+  for (const e of dedupeEvents(events)) {
+    const externalId = String(e.idEvent || e.id)
+    const { data: existing } = await supabase
+      .from("tip_matches")
+      .select("manual_override")
+      .eq("external_id", externalId)
+      .maybeSingle()
+
+    if (!existing || existing.manual_override) continue
+
+    const status = mapStatus(e.strStatus || e.strProgress)
+    const { homeScore, awayScore } = parseEventScores(e)
+
+    const { error } = await supabase
+      .from("tip_matches")
+      .update({
+        home_score: homeScore,
+        away_score: awayScore,
+        status,
+        raw_status: e.strStatus || e.strProgress || null,
+        last_synced_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("external_id", externalId)
+
+    if (!error) updated++
+  }
+  return updated
+}
+
+async function hasMatchesInLiveWindow(supabase: ReturnType<typeof getSupabaseAdmin>) {
+  const now = new Date()
+  const windowStart = new Date(now.getTime() - 5 * 60 * 1000).toISOString()
+  const windowEnd = new Date(now.getTime() + 3 * 60 * 60 * 1000).toISOString()
+  const { count } = await supabase
+    .from("tip_matches")
+    .select("id", { count: "exact", head: true })
+    .gte("kickoff_at", windowStart)
+    .lte("kickoff_at", windowEnd)
+  return (count || 0) > 0
+}
+
+async function syncLive(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+  apiKey: string,
+  leagueId: string,
+  force = false
+) {
+  const [previousEvents, leagueLive, globalLive] = await Promise.all([
+    fetchPreviousEvents(apiKey, leagueId),
+    fetchLeagueLivescore(apiKey, leagueId),
+    fetchLiveScores(apiKey),
+  ])
+
+  const globalWorldCup = globalLive.filter((e: Record<string, string>) => isWorldCupEvent(e, leagueId))
+  const updated = await applyEventResults(supabase, [...previousEvents, ...leagueLive, ...globalWorldCup])
+
+  if (!force && updated === 0 && !(await hasMatchesInLiveWindow(supabase))) {
+    return { updated: 0, skipped: true }
+  }
+
+  return { updated, skipped: false }
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders })
+  }
+
+  let logId: string | undefined
+  const supabase = getSupabaseAdmin()
+
+  try {
+    const body = req.method === "POST" ? await req.json().catch(() => ({})) : {}
+    const mode = body.mode || "live"
+    const force = body.force === true
+    const source = body.source || "cron"
+    const { apiKey, leagueId, season } = getConfig()
+
+    if (!apiKey) {
+      throw new Error("SPORTSDB_API_KEY fehlt in Supabase Secrets")
+    }
+
+    logId = await startLog(supabase, source, mode)
+    let totalUpdated = 0
+
+    if (mode === "teams" || mode === "all") {
+      totalUpdated += await syncTeams(supabase, apiKey, leagueId)
+    }
+    if (mode === "schedule" || mode === "all") {
+      totalUpdated += await syncSchedule(supabase, apiKey, leagueId, season)
+    }
+    if (mode === "live" || mode === "all") {
+      const liveResult = await syncLive(supabase, apiKey, leagueId, force || mode === "all")
+      if (liveResult.skipped) {
+        await finishLog(supabase, logId, "skipped", 0)
+        return new Response(JSON.stringify({ ok: true, skipped: true, mode }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        })
+      }
+      totalUpdated += liveResult.updated
+    }
+
+    await finishLog(supabase, logId, "success", totalUpdated)
+    return new Response(JSON.stringify({ ok: true, mode, matches_updated: totalUpdated }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    await finishLog(supabase, logId, "error", 0, message)
+    return new Response(JSON.stringify({ ok: false, error: message }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    })
+  }
+})
