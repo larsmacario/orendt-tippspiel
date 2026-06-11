@@ -128,6 +128,13 @@ export function parseScore(value: string | number | null | undefined): number | 
   return isNaN(n) ? null : n
 }
 
+export function parseEventScores(event: Record<string, string | number | null | undefined>) {
+  return {
+    homeScore: parseScore(event.intHomeScore ?? event.intScoreHome),
+    awayScore: parseScore(event.intAwayScore ?? event.intScoreAway),
+  }
+}
+
 const COUNTRY_FLAGS: Record<string, string> = {
   Germany: "🇩🇪", France: "🇫🇷", Spain: "🇪🇸", Italy: "🇮🇹", England: "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
   Brazil: "🇧🇷", Argentina: "🇦🇷", Portugal: "🇵🇹", Netherlands: "🇳🇱", Belgium: "🇧🇪",

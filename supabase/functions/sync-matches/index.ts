@@ -5,12 +5,14 @@ import {
   fetchSeasons,
   fetchSchedule,
   fetchLiveScores,
+  fetchLeagueLivescore,
+  fetchPreviousEvents,
   mapStatus,
   mapPhase,
   resolveGroupCode,
   lookupTeamGroup,
   parseKickoff,
-  parseScore,
+  parseEventScores,
   countryToEmoji,
 } from "./_shared/sportsdb.ts"
 
@@ -123,7 +125,9 @@ async function syncSchedule(
   season: string
 ) {
   const { events, seasonUsed } = await resolveSchedule(apiKey, leagueId, season)
-  if (!events.length) {
+  const previousEvents = await fetchPreviousEvents(apiKey, leagueId)
+  const allEvents = dedupeEvents([...events, ...previousEvents])
+  if (!allEvents.length) {
     throw new Error(`TheSportsDB lieferte 0 Spiele für Liga ${leagueId}, Saison ${season}. Verfügbare Saisons prüfen.`)
   }
 
@@ -137,8 +141,8 @@ async function syncSchedule(
 
   let updated = 0
   let lastError: string | null = null
-  for (let i = 0; i < events.length; i++) {
-    const e = events[i]
+  for (let i = 0; i < allEvents.length; i++) {
+    const e = allEvents[i]
     const externalId = String(e.idEvent || e.id)
     const { data: existing } = await supabase
       .from("tip_matches")
@@ -151,8 +155,7 @@ async function syncSchedule(
     const homeTeamId = e.idHomeTeam ? teamMap[String(e.idHomeTeam)] : null
     const awayTeamId = e.idAwayTeam ? teamMap[String(e.idAwayTeam)] : null
     const status = mapStatus(e.strStatus || e.strProgress)
-    const homeScore = parseScore(e.intHomeScore)
-    const awayScore = parseScore(e.intAwayScore)
+    const { homeScore, awayScore } = parseEventScores(e)
 
     const { error } = await supabase.from("tip_matches").upsert(
       {
@@ -192,31 +195,29 @@ async function syncSchedule(
   return updated
 }
 
-async function syncLive(
-  supabase: ReturnType<typeof getSupabaseAdmin>,
-  apiKey: string,
-  leagueId: string,
-  force = false
-) {
-  if (!force) {
-    const now = new Date()
-    const windowStart = new Date(now.getTime() - 5 * 60 * 1000).toISOString()
-    const windowEnd = new Date(now.getTime() + 3 * 60 * 60 * 1000).toISOString()
-    const { count } = await supabase
-      .from("tip_matches")
-      .select("id", { count: "exact", head: true })
-      .gte("kickoff_at", windowStart)
-      .lte("kickoff_at", windowEnd)
-    if (!count || count === 0) return { updated: 0, skipped: true }
+function dedupeEvents(events: Record<string, string>[]) {
+  const byId = new Map<string, Record<string, string>>()
+  for (const event of events) {
+    const externalId = String(event.idEvent || event.id || "")
+    if (!externalId) continue
+    byId.set(externalId, event)
   }
+  return [...byId.values()]
+}
 
-  const livescore = await fetchLiveScores(apiKey)
-  const wmEvents = livescore.filter(
-    (e: Record<string, string>) => String(e.idLeague || e.idLeagueSeason) === leagueId || String(e.strLeague || "").includes("World Cup")
+function isWorldCupEvent(event: Record<string, string>, leagueId: string) {
+  return (
+    String(event.idLeague || event.idLeagueSeason || "") === leagueId
+    || String(event.strLeague || "").toLowerCase().includes("world cup")
   )
+}
 
+async function applyEventResults(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+  events: Record<string, string>[]
+) {
   let updated = 0
-  for (const e of wmEvents) {
+  for (const e of dedupeEvents(events)) {
     const externalId = String(e.idEvent || e.id)
     const { data: existing } = await supabase
       .from("tip_matches")
@@ -224,11 +225,10 @@ async function syncLive(
       .eq("external_id", externalId)
       .maybeSingle()
 
-    if (existing?.manual_override) continue
+    if (!existing || existing.manual_override) continue
 
     const status = mapStatus(e.strStatus || e.strProgress)
-    const homeScore = parseScore(e.intHomeScore)
-    const awayScore = parseScore(e.intAwayScore)
+    const { homeScore, awayScore } = parseEventScores(e)
 
     const { error } = await supabase
       .from("tip_matches")
@@ -236,7 +236,7 @@ async function syncLive(
         home_score: homeScore,
         away_score: awayScore,
         status,
-        raw_status: e.strStatus || null,
+        raw_status: e.strStatus || e.strProgress || null,
         last_synced_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
@@ -244,6 +244,40 @@ async function syncLive(
 
     if (!error) updated++
   }
+  return updated
+}
+
+async function hasMatchesInLiveWindow(supabase: ReturnType<typeof getSupabaseAdmin>) {
+  const now = new Date()
+  const windowStart = new Date(now.getTime() - 5 * 60 * 1000).toISOString()
+  const windowEnd = new Date(now.getTime() + 3 * 60 * 60 * 1000).toISOString()
+  const { count } = await supabase
+    .from("tip_matches")
+    .select("id", { count: "exact", head: true })
+    .gte("kickoff_at", windowStart)
+    .lte("kickoff_at", windowEnd)
+  return (count || 0) > 0
+}
+
+async function syncLive(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+  apiKey: string,
+  leagueId: string,
+  force = false
+) {
+  const [previousEvents, leagueLive, globalLive] = await Promise.all([
+    fetchPreviousEvents(apiKey, leagueId),
+    fetchLeagueLivescore(apiKey, leagueId),
+    fetchLiveScores(apiKey),
+  ])
+
+  const globalWorldCup = globalLive.filter((e: Record<string, string>) => isWorldCupEvent(e, leagueId))
+  const updated = await applyEventResults(supabase, [...previousEvents, ...leagueLive, ...globalWorldCup])
+
+  if (!force && updated === 0 && !(await hasMatchesInLiveWindow(supabase))) {
+    return { updated: 0, skipped: true }
+  }
+
   return { updated, skipped: false }
 }
 

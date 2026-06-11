@@ -220,6 +220,13 @@ DECLARE
   v_lock_minutes INTEGER;
   v_deadline TIMESTAMPTZ;
 BEGIN
+  IF TG_OP = 'UPDATE'
+     AND NEW.home_tip IS NOT DISTINCT FROM OLD.home_tip
+     AND NEW.away_tip IS NOT DISTINCT FROM OLD.away_tip THEN
+    NEW.updated_at := now();
+    RETURN NEW;
+  END IF;
+
   SELECT kickoff_at INTO v_kickoff FROM public.tip_matches WHERE id = NEW.match_id;
 
   SELECT COALESCE(NULLIF(value, '')::INTEGER, 30) INTO v_lock_minutes
