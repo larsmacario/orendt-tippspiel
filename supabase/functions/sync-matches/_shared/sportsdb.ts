@@ -135,6 +135,19 @@ export function parseEventScores(event: Record<string, string | number | null | 
   }
 }
 
+/** Filtert Events auf die konfigurierte Saison (z. B. WM 2026, nicht Qatar 2022). */
+export function filterEventsForSeason(
+  events: Record<string, string>[],
+  season: string
+): Record<string, string>[] {
+  const year = season.match(/\d{4}/)?.[0] ?? season
+  return events.filter((event) => {
+    const strSeason = String(event.strSeason ?? "")
+    if (strSeason === season || strSeason.startsWith(year)) return true
+    return String(event.dateEvent ?? "").startsWith(year)
+  })
+}
+
 const COUNTRY_FLAGS: Record<string, string> = {
   Germany: "🇩🇪", France: "🇫🇷", Spain: "🇪🇸", Italy: "🇮🇹", England: "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
   Brazil: "🇧🇷", Argentina: "🇦🇷", Portugal: "🇵🇹", Netherlands: "🇳🇱", Belgium: "🇧🇪",

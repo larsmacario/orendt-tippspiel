@@ -13,6 +13,7 @@ import {
   lookupTeamGroup,
   parseKickoff,
   parseEventScores,
+  filterEventsForSeason,
   countryToEmoji,
 } from "./_shared/sportsdb.ts"
 
@@ -125,8 +126,7 @@ async function syncSchedule(
   season: string
 ) {
   const { events, seasonUsed } = await resolveSchedule(apiKey, leagueId, season)
-  const previousEvents = await fetchPreviousEvents(apiKey, leagueId)
-  const allEvents = dedupeEvents([...events, ...previousEvents])
+  const allEvents = dedupeEvents(filterEventsForSeason(events, seasonUsed))
   if (!allEvents.length) {
     throw new Error(`TheSportsDB lieferte 0 Spiele für Liga ${leagueId}, Saison ${season}. Verfügbare Saisons prüfen.`)
   }
@@ -263,6 +263,7 @@ async function syncLive(
   supabase: ReturnType<typeof getSupabaseAdmin>,
   apiKey: string,
   leagueId: string,
+  season: string,
   force = false
 ) {
   const [previousEvents, leagueLive, globalLive] = await Promise.all([
@@ -272,7 +273,11 @@ async function syncLive(
   ])
 
   const globalWorldCup = globalLive.filter((e: Record<string, string>) => isWorldCupEvent(e, leagueId))
-  const updated = await applyEventResults(supabase, [...previousEvents, ...leagueLive, ...globalWorldCup])
+  const seasonEvents = filterEventsForSeason(
+    [...previousEvents, ...leagueLive, ...globalWorldCup],
+    season
+  )
+  const updated = await applyEventResults(supabase, seasonEvents)
 
   if (!force && updated === 0 && !(await hasMatchesInLiveWindow(supabase))) {
     return { updated: 0, skipped: true }
@@ -310,7 +315,7 @@ Deno.serve(async (req) => {
       totalUpdated += await syncSchedule(supabase, apiKey, leagueId, season)
     }
     if (mode === "live" || mode === "all") {
-      const liveResult = await syncLive(supabase, apiKey, leagueId, force || mode === "all")
+      const liveResult = await syncLive(supabase, apiKey, leagueId, season, force || mode === "all")
       if (liveResult.skipped) {
         await finishLog(supabase, logId, "skipped", 0)
         return new Response(JSON.stringify({ ok: true, skipped: true, mode }), {
