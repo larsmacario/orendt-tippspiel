@@ -23,7 +23,7 @@ function formatUpdatedAt(iso) {
 
 function buildSlides(data) {
   const slides = [
-    { id: "leaderboard", component: LeaderboardSlide, props: { leaderboard: data.leaderboard || [] } },
+    { id: "leaderboard", component: LeaderboardSlide, props: { leaderboard: data.leaderboard || {} } },
     { id: "upcoming", component: ScheduleSlide, props: { upcoming: data.upcoming } },
     { id: "tables", component: TablesSlide, props: { tables: data.tables || [] } },
     { id: "recap", component: TimelineSlide, props: { timelines: data.timelines || [] } },

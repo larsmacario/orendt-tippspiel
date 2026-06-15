@@ -281,6 +281,163 @@
   padding: 1rem 2rem 0.75rem;
 }
 
+/* Kicktipp matrix leaderboard */
+.tv-slide-inner-kicktipp {
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem 1.5rem 0.5rem;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.tv-kicktipp-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.35rem;
+  flex-shrink: 0;
+}
+
+.tv-slide-inner-kicktipp .tv-slide-title {
+  margin-bottom: 0;
+  font-size: 1.75rem;
+}
+
+.tv-kicktipp-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin-bottom: 0.5rem;
+  flex-shrink: 0;
+  font-size: 0.9375rem;
+  color: #888;
+}
+
+.tv-kicktipp-legend-key {
+  color: #e8a020;
+  font-weight: 700;
+  margin-right: 0.15rem;
+}
+
+.tv-kicktipp-table-wrap {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.tv-kicktipp-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: auto;
+  font-size: 1.25rem;
+}
+
+.tv-kicktipp-table thead th {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #888;
+  padding: 0.35rem 0.2rem;
+  border-bottom: 1px solid #333;
+  vertical-align: bottom;
+}
+
+.tv-kicktipp-row {
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.tv-kicktipp-row:last-child {
+  border-bottom: none;
+}
+
+.tv-kicktipp-table td {
+  padding: 0.3rem 0.2rem;
+  vertical-align: middle;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.tv-kicktipp-pos {
+  width: 2.75rem;
+  text-align: left;
+  color: #bbb;
+  font-weight: 700;
+}
+
+.tv-kicktipp-delta {
+  width: 1.75rem;
+  color: #bbb;
+  font-weight: 700;
+}
+
+.tv-kicktipp-name {
+  width: auto;
+  text-align: left;
+  font-weight: 700;
+  white-space: nowrap;
+  padding-right: 0.5rem;
+}
+
+.tv-kicktipp-match-col {
+  width: 3.75rem;
+  padding: 0.3rem 0.15rem;
+}
+
+.tv-kicktipp-code {
+  display: block;
+  font-size: 0.8125rem;
+  line-height: 1.15;
+  color: #888;
+}
+
+.tv-kicktipp-score {
+  display: block;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #fff;
+  margin-top: 0.1rem;
+}
+
+.tv-kicktipp-tip {
+  width: 3.75rem;
+}
+
+.tv-kicktipp-tip-hit {
+  color: #fff;
+  font-weight: 600;
+}
+
+.tv-kicktipp-tip-miss {
+  color: #666;
+}
+
+.tv-tip-points {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #e8a020;
+  margin-left: 0.05rem;
+  vertical-align: super;
+}
+
+.tv-kicktipp-p {
+  width: 2.75rem;
+  font-weight: 700;
+  color: #e8a020;
+}
+
+.tv-kicktipp-sum {
+  width: 2.75rem;
+  color: #aaa;
+}
+
+.tv-kicktipp-g {
+  width: 2.75rem;
+  font-weight: 700;
+  color: #fff;
+}
+
 .tv-slide-inner-leaderboard .tv-slide-title {
   margin-bottom: 0.5rem;
   flex-shrink: 0;
