@@ -7,10 +7,12 @@ import {
   isLocked,
   timeUntilDeadline,
   formatDeadline,
+  isMatchStarted,
 } from "@/lib/dates"
 import { deletePrediction } from "@/lib/supabase"
 import { getMatchGroupCode } from "@/lib/groups"
 import MatchTipsToggle from "./MatchTipsToggle"
+import OwnTipLine from "./OwnTipLine"
 
 function ResetIcon() {
   return (
@@ -125,28 +127,12 @@ export default function PredictionRow({
 
         <div className="flex flex-col items-center min-w-[7rem]">
           {match.status === "finished" ? (
-            <div className="text-center">
-              <div className="font-display text-2xl sm:text-3xl font-bold text-orendt-black">
-                {match.home_score} : {match.away_score}
-              </div>
-              {prediction ? (
-                <p className="text-[11px] text-orendt-gray-500 mt-1">
-                  Dein Tipp: {prediction.home_tip}:{prediction.away_tip}
-                </p>
-              ) : (
-                <p className="text-[11px] text-orendt-gray-400 mt-1">Kein Tipp abgegeben</p>
-              )}
+            <div className="font-display text-2xl sm:text-3xl font-bold text-orendt-black text-center">
+              {match.home_score} : {match.away_score}
             </div>
           ) : isLive ? (
-            <div className="text-center">
-              <div className="font-display text-2xl sm:text-3xl font-bold text-status-live">
-                {match.home_score ?? "–"} : {match.away_score ?? "–"}
-              </div>
-              {prediction && (
-                <p className="text-[11px] text-orendt-gray-500 mt-1">
-                  Dein Tipp: {prediction.home_tip}:{prediction.away_tip}
-                </p>
-              )}
+            <div className="font-display text-2xl sm:text-3xl font-bold text-status-live text-center">
+              {match.home_score ?? "–"} : {match.away_score ?? "–"}
             </div>
           ) : locked ? (
             <div className="text-center">
@@ -217,18 +203,20 @@ export default function PredictionRow({
         </div>
       </div>
 
+      <OwnTipLine match={match} prediction={prediction} />
+
       <div className="mt-3 flex items-center justify-between text-[11px] text-orendt-gray-500">
         <span>
           {match.status === "finished"
-            ? prediction
-              ? prediction.points != null
-                ? `Dein Tipp ${prediction.home_tip}:${prediction.away_tip} · ${prediction.points} Punkt${prediction.points !== 1 ? "e" : ""}`
-                : `Dein Tipp ${prediction.home_tip}:${prediction.away_tip}`
-              : "Kein Tipp abgegeben"
+            ? isMatchStarted(match)
+              ? "Beendet"
+              : prediction?.points != null
+                ? `${prediction.points} Punkt${prediction.points !== 1 ? "e" : ""}`
+                : prediction
+                  ? "Beendet"
+                  : "Kein Tipp abgegeben"
             : isLive
-              ? prediction
-                ? `Live · Dein Tipp: ${prediction.home_tip}:${prediction.away_tip}`
-                : "Live"
+              ? "Live"
               : locked
               ? prediction
                 ? `Getippt: ${prediction.home_tip}:${prediction.away_tip} · Tipp-Schluss war ${deadlineLabel}`

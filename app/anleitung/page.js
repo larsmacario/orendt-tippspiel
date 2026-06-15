@@ -209,6 +209,10 @@ export default function AnleitungPage() {
               </li>
               <li className="flex gap-2">
                 <span className="text-orendt-accent font-bold">•</span>
+                Ab Anpfiff erscheint dein eigener Tipp als feste Zeile direkt unter jedem Spiel — zusätzlich in „Alle Tipps“.
+              </li>
+              <li className="flex gap-2">
+                <span className="text-orendt-accent font-bold">•</span>
                 Dein eigener Tipp bleibt auch nach Spielende sichtbar — neben dem Endergebnis und deinen Punkten.
               </li>
             </ul>

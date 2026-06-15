@@ -3,6 +3,7 @@
 import { TeamBadge, StatusBadge } from "./TeamBadge"
 import { formatKickoff, formatRawStatus } from "@/lib/dates"
 import MatchTipsToggle from "./MatchTipsToggle"
+import OwnTipLine from "./OwnTipLine"
 
 function formatScore(home, away) {
   if (home == null || away == null) return "–"
@@ -56,15 +57,7 @@ export default function MatchCard({ match, prediction, userId, compact = false }
           <TeamBadge team={match.away_team} size={28} />
         </div>
       </div>
-      {(isLive || isFinished) && (
-        <p className="mt-2 text-[11px] text-orendt-gray-500 text-center">
-          {prediction
-            ? isFinished && prediction.points != null
-              ? `Dein Tipp: ${prediction.home_tip}:${prediction.away_tip} · ${prediction.points} Punkte`
-              : `Dein Tipp: ${prediction.home_tip}:${prediction.away_tip}`
-            : "Kein Tipp abgegeben"}
-        </p>
-      )}
+      <OwnTipLine match={match} prediction={prediction} compact={compact} />
       {userId && <MatchTipsToggle match={match} userId={userId} compact={compact} />}
     </div>
   )
