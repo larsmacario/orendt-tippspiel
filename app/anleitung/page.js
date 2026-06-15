@@ -247,8 +247,32 @@ export default function AnleitungPage() {
 
           <SectionCard id="rangliste" icon={ListOrdered} title="Rangliste">
             <p className="text-orendt-gray-600 leading-relaxed mb-4">
-              In der Rangliste siehst du alle aktiven Teilnehmer:innen sortiert nach Gesamtpunkten.
+              Die Rangliste zeigt wie bei Kicktipp alle aktiven Spieler in einer Matrix: die letzten 5
+              beendeten Spiele als Spalten, deine Tipps mit Punkte-Hochstellung und Summen auf einen Blick —
+              ohne Auf- und Zuklappen.
             </p>
+            <ul className="space-y-3 text-sm text-orendt-gray-600 mb-6">
+              <li className="flex gap-2">
+                <span className="text-orendt-accent font-bold">•</span>
+                <strong className="text-orendt-black">P</strong> — Punkte aus den angezeigten 5 Spielen
+              </li>
+              <li className="flex gap-2">
+                <span className="text-orendt-accent font-bold">•</span>
+                <strong className="text-orendt-black">B</strong> — WM-Bonus (25 Punkte bei richtigem Sondertipp)
+              </li>
+              <li className="flex gap-2">
+                <span className="text-orendt-accent font-bold">•</span>
+                <strong className="text-orendt-black">S</strong> — Schnitt (Punkte im Fenster ÷ getippte Spiele)
+              </li>
+              <li className="flex gap-2">
+                <span className="text-orendt-accent font-bold">•</span>
+                <strong className="text-orendt-black">G</strong> — Gesamtpunkte inkl. Bonus
+              </li>
+              <li className="flex gap-2">
+                <span className="text-orendt-accent font-bold">•</span>
+                <strong className="text-orendt-black">+/-</strong> — Platzänderung seit dem letzten abgeschlossenen Spieltag
+              </li>
+            </ul>
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="p-4 rounded-xl bg-orendt-gray-50 border border-orendt-gray-100">
                 <div className="flex items-center gap-2 mb-2">

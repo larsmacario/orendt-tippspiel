@@ -5,14 +5,15 @@ import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/hooks"
 import Header from "@/components/Header"
 import Footer from "@/components/Footer"
-import Leaderboard from "@/components/Leaderboard"
-import { getLeaderboard } from "@/lib/supabase"
+import KicktippLeaderboard from "@/components/KicktippLeaderboard"
+import { getKicktippLeaderboardData } from "@/lib/supabase"
 
 export default function RanglistePage() {
   const { user, loading } = useAuth()
   const router = useRouter()
-  const [rows, setRows] = useState([])
+  const [data, setData] = useState(null)
   const [dataLoading, setDataLoading] = useState(true)
+  const [error, setError] = useState("")
 
   useEffect(() => {
     if (!loading && !user) router.replace("/login")
@@ -20,8 +21,9 @@ export default function RanglistePage() {
 
   useEffect(() => {
     if (!user) return
-    getLeaderboard().then(({ data }) => {
-      setRows(data || [])
+    getKicktippLeaderboardData().then(({ data: payload, error: err }) => {
+      if (err) setError(err.message || "Rangliste konnte nicht geladen werden.")
+      else setData(payload)
       setDataLoading(false)
     })
   }, [user])
@@ -37,10 +39,17 @@ export default function RanglistePage() {
   return (
     <div className="min-h-screen bg-orendt-gray-50 flex flex-col">
       <Header user={user} currentPage="rangliste" />
-      <main className="flex-1 max-w-3xl mx-auto w-full px-4 sm:px-6 py-10">
+      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 py-10">
         <h1 className="font-display text-3xl font-bold uppercase tracking-tight mb-2">Rangliste</h1>
-        <p className="text-sm text-orendt-gray-500 mb-8">Sortiert nach Punkten, Tiebreaker: exakte Ergebnisse, dann Tordifferenz-Treffer.</p>
-        <Leaderboard rows={rows} currentUserId={user.id} />
+        <p className="text-sm text-orendt-gray-500 mb-8">
+          Letzte 5 Spiele · +/- seit letztem abgeschlossenen Spieltag
+          {data?.snapshotMatchday ? ` (${data.snapshotMatchday})` : ""}
+        </p>
+        {error ? (
+          <div className="bg-white rounded-2xl border border-red-200 p-6 text-red-600 text-sm">{error}</div>
+        ) : (
+          <KicktippLeaderboard data={data} currentUserId={user.id} />
+        )}
       </main>
       <Footer />
     </div>

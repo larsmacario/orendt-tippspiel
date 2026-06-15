@@ -325,6 +325,13 @@ Deno.serve(async (req) => {
       totalUpdated += liveResult.updated
     }
 
+    if (totalUpdated > 0) {
+      const { error: snapshotError } = await supabase.rpc("tip_snapshot_completed_matchdays")
+      if (snapshotError) {
+        console.error("tip_snapshot_completed_matchdays failed:", snapshotError.message)
+      }
+    }
+
     await finishLog(supabase, logId, "success", totalUpdated)
     return new Response(JSON.stringify({ ok: true, mode, matches_updated: totalUpdated }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
