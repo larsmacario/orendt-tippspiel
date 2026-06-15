@@ -2,13 +2,14 @@
 
 import { TeamBadge, StatusBadge } from "./TeamBadge"
 import { formatKickoff, formatRawStatus } from "@/lib/dates"
+import MatchTipsToggle from "./MatchTipsToggle"
 
 function formatScore(home, away) {
   if (home == null || away == null) return "–"
   return `${home}:${away}`
 }
 
-export default function MatchCard({ match, prediction, compact = false }) {
+export default function MatchCard({ match, prediction, userId, compact = false }) {
   const homeName = match.home_team?.name || match.placeholder_home || "TBD"
   const awayName = match.away_team?.name || match.placeholder_away || "TBD"
   const isLive = match.status === "live"
@@ -55,14 +56,16 @@ export default function MatchCard({ match, prediction, compact = false }) {
           <TeamBadge team={match.away_team} size={28} />
         </div>
       </div>
-      {isLive && prediction && (
+      {(isLive || isFinished) && (
         <p className="mt-2 text-[11px] text-orendt-gray-500 text-center">
-          Dein Tipp: {prediction.home_tip}:{prediction.away_tip}
+          {prediction
+            ? isFinished && prediction.points != null
+              ? `Dein Tipp: ${prediction.home_tip}:${prediction.away_tip} · ${prediction.points} Punkte`
+              : `Dein Tipp: ${prediction.home_tip}:${prediction.away_tip}`
+            : "Kein Tipp abgegeben"}
         </p>
       )}
-      {prediction?.points != null && isFinished && (
-        <p className="mt-2 text-[11px] text-orendt-gray-500">{prediction.points} Punkte</p>
-      )}
+      {userId && <MatchTipsToggle match={match} userId={userId} compact={compact} />}
     </div>
   )
 }

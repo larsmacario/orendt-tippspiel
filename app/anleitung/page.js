@@ -13,6 +13,7 @@ import {
   Star,
   ListOrdered,
   ChevronRight,
+  Eye,
 } from "lucide-react"
 
 const SECTIONS = [
@@ -20,6 +21,7 @@ const SECTIONS = [
   { id: "punkte", label: "Punktesystem" },
   { id: "tippen", label: "Tipp abgeben" },
   { id: "deadlines", label: "Deadlines" },
+  { id: "tippsichtbarkeit", label: "Tippsichtbarkeit" },
   { id: "sondertipp", label: "Sondertipp" },
   { id: "rangliste", label: "Rangliste" },
 ]
@@ -184,6 +186,30 @@ export default function AnleitungPage() {
               <li className="flex gap-2">
                 <span className="text-orendt-accent font-bold">•</span>
                 Im Dashboard siehst du offene Tipps für den nächsten Spieltag.
+              </li>
+            </ul>
+          </SectionCard>
+
+          <SectionCard id="tippsichtbarkeit" icon={Eye} title="Tippsichtbarkeit">
+            <p className="text-orendt-gray-600 leading-relaxed mb-4">
+              Wie bei Kicktipp siehst du ab Anpfiff die Tipps aller Mitspieler — und nach Spielende, wer wie viele Punkte bekommen hat.
+            </p>
+            <ul className="space-y-3 text-sm text-orendt-gray-600">
+              <li className="flex gap-2">
+                <span className="text-orendt-accent font-bold">•</span>
+                Vor Anpfiff sind nur deine eigenen Tipps sichtbar. Fremde Tipps bleiben verborgen.
+              </li>
+              <li className="flex gap-2">
+                <span className="text-orendt-accent font-bold">•</span>
+                Ab Anpfiff kannst du im Spielplan und Dashboard über „Alle Tipps“ die Tipps aller aktiven Spieler einsehen.
+              </li>
+              <li className="flex gap-2">
+                <span className="text-orendt-accent font-bold">•</span>
+                Nach Spielende zeigt die Tabelle zusätzlich die Punkte pro Spieler. Deine eigene Zeile ist hervorgehoben.
+              </li>
+              <li className="flex gap-2">
+                <span className="text-orendt-accent font-bold">•</span>
+                Dein eigener Tipp bleibt auch nach Spielende sichtbar — neben dem Endergebnis und deinen Punkten.
               </li>
             </ul>
           </SectionCard>

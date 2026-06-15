@@ -185,7 +185,7 @@ export default function DashboardPage() {
           {sortedTodayMatches.length > 0 ? (
             <div className="grid gap-3">
               {sortedTodayMatches.map((m) => (
-                <MatchCard key={m.id} match={m} prediction={predictions[m.id]} />
+                <MatchCard key={m.id} match={m} prediction={predictions[m.id]} userId={user.id} />
               ))}
             </div>
           ) : (

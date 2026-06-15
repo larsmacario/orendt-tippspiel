@@ -10,6 +10,7 @@ import {
 } from "@/lib/dates"
 import { deletePrediction } from "@/lib/supabase"
 import { getMatchGroupCode } from "@/lib/groups"
+import MatchTipsToggle from "./MatchTipsToggle"
 
 function ResetIcon() {
   return (
@@ -124,8 +125,17 @@ export default function PredictionRow({
 
         <div className="flex flex-col items-center min-w-[7rem]">
           {match.status === "finished" ? (
-            <div className="font-display text-2xl sm:text-3xl font-bold text-orendt-black">
-              {match.home_score} : {match.away_score}
+            <div className="text-center">
+              <div className="font-display text-2xl sm:text-3xl font-bold text-orendt-black">
+                {match.home_score} : {match.away_score}
+              </div>
+              {prediction ? (
+                <p className="text-[11px] text-orendt-gray-500 mt-1">
+                  Dein Tipp: {prediction.home_tip}:{prediction.away_tip}
+                </p>
+              ) : (
+                <p className="text-[11px] text-orendt-gray-400 mt-1">Kein Tipp abgegeben</p>
+              )}
             </div>
           ) : isLive ? (
             <div className="text-center">
@@ -209,8 +219,12 @@ export default function PredictionRow({
 
       <div className="mt-3 flex items-center justify-between text-[11px] text-orendt-gray-500">
         <span>
-          {match.status === "finished" && prediction?.points != null
-            ? `${prediction.points} Punkt${prediction.points !== 1 ? "e" : ""}`
+          {match.status === "finished"
+            ? prediction
+              ? prediction.points != null
+                ? `Dein Tipp ${prediction.home_tip}:${prediction.away_tip} · ${prediction.points} Punkt${prediction.points !== 1 ? "e" : ""}`
+                : `Dein Tipp ${prediction.home_tip}:${prediction.away_tip}`
+              : "Kein Tipp abgegeben"
             : isLive
               ? prediction
                 ? `Live · Dein Tipp: ${prediction.home_tip}:${prediction.away_tip}`
@@ -228,6 +242,7 @@ export default function PredictionRow({
         {match.venue && <span className="truncate max-w-[40%]">{match.venue}</span>}
       </div>
       {error && <p className="mt-2 text-xs text-red-500">{error}</p>}
+      <MatchTipsToggle match={match} userId={userId} />
     </div>
   )
 }
