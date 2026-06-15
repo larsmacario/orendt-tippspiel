@@ -4,7 +4,7 @@ function LeaderboardEmpty() {
   return (
     <div className="flex h-full flex-col px-8 py-6">
       <h2 className="text-2xl md:text-3xl font-display font-bold uppercase tracking-wider mb-2">
-        Top 10 Tipprunde
+        Top 15 Tipprunde
       </h2>
       <div className="flex flex-1 flex-col items-center justify-center text-center px-8">
         <p className="text-3xl md:text-4xl font-display font-bold text-orendt-gray-400">
@@ -30,7 +30,7 @@ export default function LeaderboardSlide({ leaderboard }) {
     <div className="flex h-full flex-col px-8 py-5 min-h-0">
       <div className="flex items-baseline justify-between gap-4 mb-2 shrink-0">
         <h2 className="text-2xl md:text-3xl font-display font-bold uppercase tracking-wider">
-          Top 10 Tipprunde
+          Top 15 Tipprunde
         </h2>
         {leaderboard.snapshotMatchday && (
           <span className="text-[10px] uppercase tracking-widest text-orendt-gray-500 shrink-0">
