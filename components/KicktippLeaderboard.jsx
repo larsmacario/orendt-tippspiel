@@ -28,6 +28,7 @@ export default function KicktippLeaderboard({ data, currentUserId }) {
         rows={rows}
         matches={matches}
         currentUserId={currentUserId}
+        snapshotMatchday={data?.snapshotMatchday}
         variant="light"
       />
     </div>

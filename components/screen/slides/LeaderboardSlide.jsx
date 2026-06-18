@@ -1,4 +1,5 @@
 import KicktippMatrixTable from "@/components/KicktippMatrixTable"
+import { formatRankDeltaCaption } from "@/lib/leaderboard-matrix"
 
 function LeaderboardEmpty() {
   return (
@@ -33,8 +34,8 @@ export default function LeaderboardSlide({ leaderboard }) {
           Top Tipper
         </h2>
         {leaderboard.snapshotMatchday && (
-          <span className="text-[10px] uppercase tracking-widest text-orendt-gray-500 shrink-0">
-            +/- seit {leaderboard.snapshotMatchday}
+          <span className="text-[10px] uppercase tracking-widest text-orendt-gray-500 shrink-0 text-right max-w-[14rem] leading-snug normal-case">
+            {formatRankDeltaCaption(leaderboard.snapshotMatchday)}
           </span>
         )}
       </div>
@@ -42,6 +43,7 @@ export default function LeaderboardSlide({ leaderboard }) {
         <KicktippMatrixTable
           rows={rows}
           matches={matches}
+          snapshotMatchday={leaderboard.snapshotMatchday}
           variant="dark"
           size="screen"
           className="h-full"

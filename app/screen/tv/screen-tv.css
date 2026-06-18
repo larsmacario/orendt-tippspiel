@@ -320,6 +320,14 @@
   margin-right: 0.15rem;
 }
 
+.tv-kicktipp-legend-delta {
+  flex-basis: 100%;
+  margin: 0.15rem 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  color: #777;
+}
+
 .tv-kicktipp-table-wrap {
   flex: 1;
   min-height: 0;

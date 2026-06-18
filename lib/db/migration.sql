@@ -179,7 +179,7 @@ BEGIN
   tip_diff := p_home_tip - p_away_tip;
   score_diff := p_home_score - p_away_score;
 
-  IF tip_diff = score_diff THEN
+  IF tip_diff = score_diff AND tip_diff <> 0 THEN
     RETURN 3;
   END IF;
 

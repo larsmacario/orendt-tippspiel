@@ -1,6 +1,11 @@
 "use client"
 
-import { formatTeamCode, SUMMARY_LEGEND } from "@/lib/leaderboard-matrix"
+import {
+  formatTeamCode,
+  formatRankDeltaCaption,
+  formatRankDeltaHint,
+  SUMMARY_LEGEND,
+} from "@/lib/leaderboard-matrix"
 
 const VARIANTS = {
   light: {
@@ -73,9 +78,11 @@ const SIZES = {
     tipSup: "text-[10px]",
     matchMinW: "min-w-[3rem]",
     cellPy: "py-2",
-    posW: "w-9",
-    deltaW: "w-6",
-    stickyName: "left-[3.75rem]",
+    posW: "w-9 min-w-[2.25rem]",
+    deltaW: "w-10 min-w-[2.5rem]",
+    stickyPos: "left-0",
+    stickyDelta: "left-9",
+    stickyName: "left-[4.75rem]",
     pW: "w-9",
     bW: "w-9",
     sW: "w-11",
@@ -92,9 +99,11 @@ const SIZES = {
     tipSup: "text-xs",
     matchMinW: "min-w-[3.75rem]",
     cellPy: "py-3",
-    posW: "w-11",
-    deltaW: "w-8",
-    stickyName: "left-[4.75rem]",
+    posW: "w-11 min-w-[2.75rem]",
+    deltaW: "w-12 min-w-[3rem]",
+    stickyPos: "left-0",
+    stickyDelta: "left-11",
+    stickyName: "left-[5.75rem]",
     pW: "w-11",
     bW: "w-11",
     sW: "w-14",
@@ -102,23 +111,31 @@ const SIZES = {
   },
 }
 
-function SummaryLegend({ variant, size, className = "" }) {
+function SummaryLegend({ variant, size, snapshotMatchday, className = "" }) {
   const v = VARIANTS[variant]
   const s = SIZES[size]
   return (
-    <div className={`flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2.5 border-b ${v.legend} ${className}`}>
-      {SUMMARY_LEGEND.map((item) => (
-        <span key={item.key} className={s.legend}>
-          <span
-            className={`font-display font-bold mr-1 ${
-              item.accent ? v.legendKey.accent : item.bold ? v.legendKey.bold : v.legendKey.default
-            }`}
-          >
-            {item.key}
+    <div className={`px-4 py-2.5 border-b ${v.legend} ${className}`}>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+        {SUMMARY_LEGEND.map((item) => (
+          <span key={item.key} className={s.legend}>
+            <span
+              className={`font-display font-bold mr-1 ${
+                item.accent ? v.legendKey.accent : item.bold ? v.legendKey.bold : v.legendKey.default
+              }`}
+            >
+              {item.key}
+            </span>
+            {item.label}
           </span>
-          {item.label}
-        </span>
-      ))}
+        ))}
+      </div>
+      {snapshotMatchday && (
+        <p className={`mt-2 ${s.legend} leading-relaxed ${v.legendKey.default}`}>
+          <span className={`font-display font-bold mr-1 ${v.legendKey.bold}`}>+/-</span>
+          {formatRankDeltaHint(snapshotMatchday)}
+        </p>
+      )}
     </div>
   )
 }
@@ -175,6 +192,7 @@ export default function KicktippMatrixTable({
   rows = [],
   matches = [],
   currentUserId = null,
+  snapshotMatchday = null,
   variant = "light",
   size = "default",
   showLegend = true,
@@ -182,18 +200,29 @@ export default function KicktippMatrixTable({
 }) {
   const v = VARIANTS[variant]
   const s = SIZES[size] ?? SIZES.default
-  const stickyPos = "left-0"
+  const rankDeltaHint = formatRankDeltaHint(snapshotMatchday)
+  const stickyShadow =
+    variant === "dark"
+      ? "shadow-[4px_0_8px_-4px_rgba(0,0,0,0.45)]"
+      : "shadow-[4px_0_8px_-4px_rgba(0,0,0,0.08)]"
 
   return (
     <div className={`overflow-hidden ${v.wrapper} ${className}`}>
-      {showLegend && <SummaryLegend variant={variant} size={size} />}
+      {showLegend && (
+        <SummaryLegend variant={variant} size={size} snapshotMatchday={snapshotMatchday} />
+      )}
       <div className="overflow-x-auto">
         <table className={`w-full min-w-0 ${s.table} border-collapse`}>
           <thead>
             <tr className={`border-b ${s.thead} font-display font-bold uppercase tracking-wider ${v.thead}`}>
-              <th className={`px-2 ${s.cellPy} text-left ${s.posW} sticky ${stickyPos} z-10 ${v.theadSticky}`}>Pos</th>
-              <th className={`px-1.5 ${s.cellPy} text-center ${s.deltaW}`}>+/-</th>
-              <th className={`px-2 ${s.cellPy} text-left whitespace-nowrap sticky ${s.stickyName} z-10 ${v.theadSticky}`}>Name</th>
+              <th className={`px-2 ${s.cellPy} text-left ${s.posW} sticky ${s.stickyPos} z-20 ${v.theadSticky}`}>Pos</th>
+              <th
+                className={`px-1.5 ${s.cellPy} text-center ${s.deltaW} sticky ${s.stickyDelta} z-20 ${v.theadSticky}`}
+                title={rankDeltaHint}
+              >
+                +/-
+              </th>
+              <th className={`px-2 ${s.cellPy} text-left whitespace-nowrap sticky ${s.stickyName} z-20 ${stickyShadow} ${v.theadSticky}`}>Name</th>
               {matches.map((match) => (
                 <th key={match.id} className={`px-2 ${s.cellPy} text-center`}>
                   <MatchHeader match={match} variant={variant} size={size} />
@@ -212,13 +241,13 @@ export default function KicktippMatrixTable({
 
               return (
                 <tr key={row.userId} className={`border-b last:border-0 ${v.rowBorder} ${rowBg}`}>
-                  <td className={`px-2 ${s.cellPy} font-display font-bold tabular-nums sticky ${stickyPos} z-10 ${rowBg} ${v.rank}`}>
+                  <td className={`px-2 ${s.cellPy} font-display font-bold tabular-nums sticky ${s.stickyPos} z-10 ${rowBg} ${v.rank}`}>
                     {row.rank}.
                   </td>
-                  <td className={`px-1.5 ${s.cellPy} text-center font-display font-bold tabular-nums ${v.rank}`}>
+                  <td className={`px-1.5 ${s.cellPy} text-center font-display font-bold tabular-nums sticky ${s.stickyDelta} z-10 ${rowBg} ${v.rank}`}>
                     {row.rankDeltaLabel || ""}
                   </td>
-                  <td className={`px-2 ${s.cellPy} font-display font-bold ${s.name} whitespace-nowrap sticky ${s.stickyName} z-10 ${rowBg} ${v.name}`}>
+                  <td className={`px-2 ${s.cellPy} font-display font-bold ${s.name} whitespace-nowrap sticky ${s.stickyName} z-10 ${stickyShadow} ${rowBg} ${v.name}`}>
                     {row.displayName}
                     {isMe && <span className={`font-normal ${s.nameYou} ml-1 ${v.nameYou}`}>(du)</span>}
                   </td>

@@ -29,7 +29,7 @@ const SECTIONS = [
 const SCORING_ROWS = [
   { points: "4", label: "Exaktes Ergebnis", example: "Tipp 2:1, Ergebnis 2:1", accent: true },
   { points: "3", label: "Richtige Tordifferenz", example: "Tipp 3:1, Ergebnis 2:0 (Diff +2)" },
-  { points: "2", label: "Richtige Tendenz", example: "Tipp 1:0, Ergebnis 3:2 (Heimsieg)" },
+  { points: "2", label: "Richtige Tendenz", example: "Tipp 1:0, Ergebnis 2:0 (Heimsieg)" },
   { points: "0", label: "Falscher Tipp", example: "Tipp 2:1, Ergebnis 0:1" },
 ]
 
@@ -124,8 +124,15 @@ export default function AnleitungPage() {
           </SectionCard>
 
           <SectionCard id="punkte" icon={Target} title="Punktesystem">
-            <p className="text-orendt-gray-600 leading-relaxed mb-6">
+            <p className="text-orendt-gray-600 leading-relaxed mb-4">
               Wir nutzen das bewährte Kicker-Punktesystem. Pro Spiel kannst du maximal 4 Punkte erhalten.
+              Bei Unentschieden gibt es keine Tordifferenz-Punkte — nur exakt (4) oder richtige Tendenz (2).
+            </p>
+            <p className="text-orendt-gray-600 leading-relaxed mb-6">
+              Es wird das Ergebnis nach 90 Minuten inkl. Nachspielzeit getippt und gewertet.
+              Tore in der Verlängerung und Elfmeterschießen zählen nicht.
+              In der Gruppenphase entfällt Verlängerung und Elfmeter ohnehin (FIFA-Regel).
+              Bei K.o.-Spielen mit Verlängerung kann der Admin das 90-Minuten-Ergebnis manuell korrigieren.
             </p>
             <div className="overflow-x-auto rounded-xl border border-orendt-gray-200">
               <table className="w-full text-sm">
@@ -249,7 +256,9 @@ export default function AnleitungPage() {
             <p className="text-orendt-gray-600 leading-relaxed mb-4">
               Die Rangliste zeigt wie bei Kicktipp alle aktiven Spieler in einer Matrix: die letzten 5
               beendeten Spiele als Spalten, deine Tipps mit Punkte-Hochstellung und Summen auf einen Blick —
-              ohne Auf- und Zuklappen.
+              ohne Auf- und Zuklappen. Die Spalten <strong className="text-orendt-black">P</strong> und{" "}
+              <strong className="text-orendt-black">+/-</strong> beziehen sich auf{" "}
+              <strong className="text-orendt-black">unterschiedliche Zeiträume</strong>.
             </p>
             <ul className="space-y-3 text-sm text-orendt-gray-600 mb-6">
               <li className="flex gap-2">
@@ -270,7 +279,11 @@ export default function AnleitungPage() {
               </li>
               <li className="flex gap-2">
                 <span className="text-orendt-accent font-bold">•</span>
-                <strong className="text-orendt-black">+/-</strong> — Platzänderung seit dem letzten abgeschlossenen Spieltag
+                <strong className="text-orendt-black">+/-</strong> — Platzänderung im letzten
+                abgeschlossenen Spieltag (z. B. „+/- Spieltag 18.06.“), verglichen mit dem Stand{" "}
+                <strong className="text-orendt-black">davor</strong>. Das ist{" "}
+                <strong className="text-orendt-black">nicht</strong> „vor den 5 angezeigten Spielen“ —
+                Gesamtpunkte minus P ergibt keinen früheren Rang.
               </li>
             </ul>
             <div className="grid sm:grid-cols-2 gap-4">

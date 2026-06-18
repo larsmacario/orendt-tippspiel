@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useMemo, useCallback } from "react"
+import { useEffect, useState, useMemo, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/hooks"
 import Header from "@/components/Header"
@@ -9,8 +9,9 @@ import MatchCard from "@/components/MatchCard"
 import PredictionRow from "@/components/PredictionRow"
 import Leaderboard from "@/components/Leaderboard"
 import OnboardingModal from "@/components/OnboardingModal"
+import ScoringNoticeModal from "@/components/ScoringNoticeModal"
 import { LiveDot } from "@/components/TeamBadge"
-import { getTodayMatches, getUpcomingMatches, getMyPredictions, getMyRank, getLeaderboard, getPredictionLockMinutes, markOnboardingSeen } from "@/lib/supabase"
+import { getTodayMatches, getUpcomingMatches, getMyPredictions, getMyRank, getLeaderboard, getPredictionLockMinutes, markOnboardingSeen, markScoringNoticeSeen } from "@/lib/supabase"
 import { usePredictionSaveFab, PredictionSaveFab } from "@/lib/usePredictionSaveFab"
 import {
   isLocked,
@@ -20,6 +21,7 @@ import {
   shouldPollTodayMatches,
   sortMatchesForToday,
 } from "@/lib/dates"
+import { hasSeenScoringNotice, markScoringNoticeSeenLocally } from "@/lib/scoring-notice"
 
 const POLL_INTERVAL_MS = 45_000
 
@@ -35,15 +37,21 @@ export default function DashboardPage() {
   const [dataLoading, setDataLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(false)
+  const [showScoringNotice, setShowScoringNotice] = useState(false)
+  const scoringNoticeDismissedRef = useRef(false)
 
   useEffect(() => {
     if (!loading && !user) router.replace("/login")
   }, [user, loading, router])
 
   useEffect(() => {
-    if (!user || dataLoading) return
+    if (!user || dataLoading || scoringNoticeDismissedRef.current) return
     if (user.onboarding_seen === false) {
       setShowOnboarding(true)
+      return
+    }
+    if (!hasSeenScoringNotice(user)) {
+      setShowScoringNotice(true)
     }
   }, [user, dataLoading])
 
@@ -52,7 +60,10 @@ export default function DashboardPage() {
     if (!user?.id) return
     await markOnboardingSeen(user.id)
     await refresh()
-  }, [user?.id, refresh])
+    if (!hasSeenScoringNotice(user)) {
+      setShowScoringNotice(true)
+    }
+  }, [user?.id, user?.scoring_notice_seen, refresh])
 
   const handleGoToGuideFromOnboarding = useCallback(async () => {
     setShowOnboarding(false)
@@ -60,6 +71,18 @@ export default function DashboardPage() {
       await markOnboardingSeen(user.id)
       await refresh()
     }
+    if (!hasSeenScoringNotice(user)) {
+      setShowScoringNotice(true)
+    }
+  }, [user, refresh])
+
+  const handleConfirmScoringNotice = useCallback(async () => {
+    scoringNoticeDismissedRef.current = true
+    setShowScoringNotice(false)
+    markScoringNoticeSeenLocally()
+    if (!user?.id) return
+    const { error } = await markScoringNoticeSeen(user.id)
+    if (!error) await refresh()
   }, [user?.id, refresh])
 
   const loadData = useCallback(async ({ silent = false } = {}) => {
@@ -152,6 +175,10 @@ export default function DashboardPage() {
         open={showOnboarding}
         onClose={handleCloseOnboarding}
         onGoToGuide={handleGoToGuideFromOnboarding}
+      />
+      <ScoringNoticeModal
+        open={showScoringNotice}
+        onConfirm={handleConfirmScoringNotice}
       />
       <main className={`flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 py-10 animate-slide-up ${saveFab.hasPending ? "pb-24" : ""}`}>
         <div className="mb-10">

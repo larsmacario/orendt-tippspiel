@@ -1,24 +1,4 @@
--- Rank snapshots per Berlin matchday for Kicktipp-style +/- column
-
-CREATE TABLE IF NOT EXISTS public.tip_rank_snapshots (
-  matchday_key TEXT NOT NULL,
-  user_id UUID NOT NULL REFERENCES public.tip_profiles(id) ON DELETE CASCADE,
-  rank INTEGER NOT NULL,
-  total_points INTEGER NOT NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  PRIMARY KEY (matchday_key, user_id)
-);
-
-CREATE INDEX IF NOT EXISTS idx_tip_rank_snapshots_matchday
-  ON public.tip_rank_snapshots(matchday_key);
-
-CREATE OR REPLACE FUNCTION public.tip_matchday_key(kickoff TIMESTAMPTZ)
-RETURNS TEXT
-LANGUAGE sql
-IMMUTABLE
-AS $$
-  SELECT to_char(kickoff AT TIME ZONE 'Europe/Berlin', 'YYYY-MM-DD');
-$$;
+-- +/- nur für den letzten Spieltag: Snapshots historisch korrekt speichern
 
 CREATE OR REPLACE FUNCTION public.tip_snapshot_completed_matchdays()
 RETURNS INTEGER
@@ -81,13 +61,7 @@ BEGIN
 END;
 $$;
 
-ALTER TABLE public.tip_rank_snapshots ENABLE ROW LEVEL SECURITY;
+-- Bestehende Snapshots hatten teils den aktuellen statt historischen Stand
+DELETE FROM public.tip_rank_snapshots;
 
-DROP POLICY IF EXISTS "tip_rank_snapshots_select" ON public.tip_rank_snapshots;
-CREATE POLICY "tip_rank_snapshots_select" ON public.tip_rank_snapshots
-  FOR SELECT TO authenticated
-  USING (true);
-
-GRANT SELECT ON public.tip_rank_snapshots TO authenticated;
-GRANT EXECUTE ON FUNCTION public.tip_snapshot_completed_matchdays() TO authenticated;
-GRANT EXECUTE ON FUNCTION public.tip_snapshot_completed_matchdays() TO service_role;
+SELECT public.tip_snapshot_completed_matchdays();
