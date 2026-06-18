@@ -27,16 +27,16 @@ const SECTIONS = [
 ]
 
 const SCORING_ROWS = [
-  { points: "4", label: "Exaktes Ergebnis", example: "Tipp 2:1, Ergebnis 2:1", accent: true },
-  { points: "3", label: "Richtige Tordifferenz", example: "Tipp 3:1, Ergebnis 2:0 (Diff +2, nur bei Sieg)" },
-  { points: "2", label: "Richtige Tendenz", example: "Tipp 1:0, Ergebnis 2:0 (Heimsieg)" },
-  { points: "2", label: "Richtige Tendenz (Remis)", example: "Tipp 1:1, Ergebnis 2:2 — kein 3-Punkte-Torverhältnis" },
+  { points: "4", label: "Exaktes Ergebnis", example: "Tipp 2:1, Ergebnis 2:1 — gilt bei Sieg und Remis", accent: true },
+  { points: "3", label: "Richtige Tordifferenz", example: "Tipp 3:1, Ergebnis 2:0 — nur bei Sieg, nicht bei Remis" },
+  { points: "2", label: "Richtige Tendenz (Sieg)", example: "Tipp 1:0, Ergebnis 2:0 (Heimsieg)" },
+  { points: "1", label: "Richtige Tendenz (Remis)", example: "Tipp 1:1, Ergebnis 2:2 (Unentschieden)" },
   { points: "0", label: "Falscher Tipp", example: "Tipp 2:1, Ergebnis 0:1" },
 ]
 
 const STANDARD_RULE_ROWS = [
   { outcome: "Heimsieg", tendency: "2", diff: "3", exact: "4" },
-  { outcome: "Unentschieden", tendency: "2", diff: "–", exact: "4" },
+  { outcome: "Unentschieden", tendency: "1", diff: "–", exact: "4" },
   { outcome: "Auswärtssieg", tendency: "2", diff: "3", exact: "4" },
 ]
 
@@ -44,7 +44,7 @@ const STEPS = [
   { step: "1", title: "Dashboard oder Spielplan öffnen", text: "Unter Dashboard siehst du fehlende Tipps. Im Spielplan findest du alle Spiele mit Filtern." },
   { step: "2", title: "Ergebnis eingeben", text: "Trage Heim- und Auswärtstore nach 90 Minuten inkl. Nachspielzeit ein. Bestätige deinen Tipp mit dem Speichern-Button unten." },
   { step: "3", title: "Bis zur Deadline ändern", text: "Tipps kannst du zurücksetzen und neu eingeben, solange die Tipp-Sperre noch nicht aktiv ist." },
-  { step: "4", title: "Punkte sammeln", text: "Nach Abpfiff werden deine Punkte automatisch berechnet — bei Remis maximal 2 oder 4 Punkte, nie 3." },
+  { step: "4", title: "Punkte sammeln", text: "Nach Abpfiff werden deine Punkte automatisch berechnet — bei Sieg bis zu 4, bei Remis maximal 1 oder 4 Punkte." },
 ]
 
 function SectionCard({ id, icon: Icon, title, children }) {
@@ -119,7 +119,7 @@ export default function AnleitungPage() {
             <div className="grid sm:grid-cols-3 gap-4">
               {[
                 { title: "Tippen", text: "Ergebnisse für Spiele der Gruppen- und K.o.-Phase abgeben" },
-                { title: "Punkte", text: "Bis zu 4 Punkte pro Spiel — bei Remis max. 2 oder 4" },
+                { title: "Punkte", text: "Bis zu 4 pro Spiel — Sieg: 2/3/4, Remis: 1 oder 4" },
                 { title: "Rangliste", text: "Vergleich mit allen aktiven Kolleg:innen" },
               ].map((item) => (
                 <div key={item.title} className="p-4 rounded-xl bg-orendt-gray-50 border border-orendt-gray-100">
@@ -132,9 +132,10 @@ export default function AnleitungPage() {
 
           <SectionCard id="punkte" icon={Target} title="Punktesystem">
             <p className="text-orendt-gray-600 leading-relaxed mb-4">
-              Wir nutzen das bewährte Kicker-Punktesystem. Pro Spiel kannst du maximal 4 Punkte erhalten.
-              Bei Unentschieden gibt es <strong className="text-orendt-black">keine Tordifferenz-Punkte</strong> —
-              das Torverhältnis wäre immer 0:0 und wäre unfair. Es gibt nur exakt (4) oder richtige Tendenz (2).
+              Pro Spiel kannst du maximal 4 Punkte erhalten. Bei <strong className="text-orendt-black">Siegen</strong> gibt
+              es Tendenz (2), Tordifferenz (3) und exakt (4). Bei <strong className="text-orendt-black">Unentschieden</strong> gibt
+              es <strong className="text-orendt-black">keine Tordifferenz-Punkte</strong> — das Torverhältnis wäre immer 0:0
+              und wäre unfair. Stattdessen nur Remis-Tendenz (1) oder exakt (4), nie 3.
             </p>
             <p className="text-orendt-gray-600 leading-relaxed mb-6">
               Es wird das Ergebnis <strong className="text-orendt-black">nach 90 Minuten inkl. Nachspielzeit</strong> getippt und gewertet —
@@ -142,6 +143,15 @@ export default function AnleitungPage() {
               In der Gruppenphase entfällt Verlängerung und Elfmeter ohnehin (FIFA-Regel).
               Bei K.o.-Spielen mit Verlängerung kann der Admin das 90-Minuten-Ergebnis manuell korrigieren.
             </p>
+
+            <div className="p-4 rounded-xl bg-orendt-accent/10 border border-orendt-accent/25 mb-6">
+              <p className="font-display font-bold text-sm text-orendt-black mb-1">Remis vs. Sieg</p>
+              <p className="text-sm text-orendt-gray-700 leading-relaxed">
+                Richtige Tendenz bei einem Sieg bringt <strong className="text-orendt-black">2 Punkte</strong>,
+                bei Unentschieden nur <strong className="text-orendt-black">1 Punkt</strong>.
+                Beispiel Remis: Tipp 0:0, Ergebnis 1:1 → 1 Punkt. Beispiel Sieg: Tipp 1:0, Ergebnis 3:1 → 2 Punkte.
+              </p>
+            </div>
 
             <p className="font-display font-bold text-[10px] uppercase tracking-wider text-orendt-gray-500 mb-3">
               Standardregel

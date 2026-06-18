@@ -5,12 +5,16 @@ import { Scale, Info } from "lucide-react"
 
 const POINTS = [
   {
-    title: "Unentschieden korrigiert",
-    text: "Bei Remis gibt es keine Tordifferenz-Punkte mehr. Richtig getipptes Unentschieden bringt 2 Punkte (Tendenz) oder 4 (exakt) — nicht mehr fälschlich 3.",
+    title: "Remis: 1 oder 4 Punkte",
+    text: "Bei Unentschieden gibt es keine Tordifferenz-Punkte (kein 3). Richtige Remis-Tendenz bringt 1 Punkt, exakt getippt 4 — z. B. Tipp 1:1, Ergebnis 2:2.",
   },
   {
-    title: "Bestehende Tipps neu berechnet",
-    text: "Alle abgeschlossenen Spiele wurden mit der korrigierten Regel neu gewertet. Dein Punktestand und dein Rang können sich dadurch geändert haben.",
+    title: "Siege: 2, 3 oder 4 Punkte",
+    text: "Bei Heim- oder Auswärtssieg gilt weiterhin: 2 für Tendenz, 3 für Tordifferenz, 4 für exakt — z. B. Tipp 1:0, Ergebnis 2:0.",
+  },
+  {
+    title: "Tipps neu berechnet",
+    text: "Alle abgeschlossenen Spiele wurden mit der aktualisierten Regel neu gewertet. Dein Punktestand und dein Rang können sich geändert haben.",
   },
   {
     title: "90-Minuten-Regel",
@@ -58,8 +62,8 @@ export default function ScoringNoticeModal({ open, onConfirm }) {
           </div>
 
           <p className="text-sm text-orendt-gray-600 leading-relaxed mb-6">
-            Wir haben die Punktevergabe korrigiert und alle bisherigen Tipps neu berechnet.
-            Kurz zusammengefasst:
+            Das Punktesystem wurde angepasst — besonders bei Unentschieden.
+            Alle bisherigen Tipps wurden neu berechnet. Kurz zusammengefasst:
           </p>
 
           <ul className="space-y-3 mb-6">

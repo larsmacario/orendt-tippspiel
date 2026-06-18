@@ -183,8 +183,12 @@ BEGIN
     RETURN 3;
   END IF;
 
-  IF (tip_diff > 0 AND score_diff > 0) OR (tip_diff < 0 AND score_diff < 0) OR (tip_diff = 0 AND score_diff = 0) THEN
+  IF (tip_diff > 0 AND score_diff > 0) OR (tip_diff < 0 AND score_diff < 0) THEN
     RETURN 2;
+  END IF;
+
+  IF tip_diff = 0 AND score_diff = 0 THEN
+    RETURN 1;
   END IF;
 
   RETURN 0;

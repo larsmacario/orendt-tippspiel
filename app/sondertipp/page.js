@@ -77,7 +77,7 @@ export default function SondertippPage() {
   return (
     <div className="min-h-screen bg-orendt-gray-50 flex flex-col">
       <Header user={user} currentPage="sondertipp" />
-      <main className="flex-1 max-w-3xl mx-auto w-full px-4 sm:px-6 py-10">
+      <main className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 py-10">
         <h1 className="font-display text-3xl font-bold uppercase tracking-tight mb-2">Weltmeister-Tipp</h1>
         <p className="text-sm text-orendt-gray-500 mb-8">
           Wähle deinen WM-Sieger vor Turnierstart. Richtig getippt: +{bonus} Bonuspunkte.

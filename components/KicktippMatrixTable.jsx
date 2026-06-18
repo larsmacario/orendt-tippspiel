@@ -3,7 +3,6 @@
 import {
   formatTeamCode,
   formatRankDeltaCaption,
-  formatRankDeltaHint,
   SUMMARY_LEGEND,
 } from "@/lib/leaderboard-matrix"
 
@@ -111,7 +110,7 @@ const SIZES = {
   },
 }
 
-function SummaryLegend({ variant, size, snapshotMatchday, className = "" }) {
+function SummaryLegend({ variant, size, className = "" }) {
   const v = VARIANTS[variant]
   const s = SIZES[size]
   return (
@@ -130,12 +129,6 @@ function SummaryLegend({ variant, size, snapshotMatchday, className = "" }) {
           </span>
         ))}
       </div>
-      {snapshotMatchday && (
-        <p className={`mt-2 ${s.legend} leading-relaxed ${v.legendKey.default}`}>
-          <span className={`font-display font-bold mr-1 ${v.legendKey.bold}`}>+/-</span>
-          {formatRankDeltaHint(snapshotMatchday)}
-        </p>
-      )}
     </div>
   )
 }
@@ -200,7 +193,7 @@ export default function KicktippMatrixTable({
 }) {
   const v = VARIANTS[variant]
   const s = SIZES[size] ?? SIZES.default
-  const rankDeltaHint = formatRankDeltaHint(snapshotMatchday)
+  const rankDeltaHint = snapshotMatchday ? formatRankDeltaCaption(snapshotMatchday) : undefined
   const stickyShadow =
     variant === "dark"
       ? "shadow-[4px_0_8px_-4px_rgba(0,0,0,0.45)]"
@@ -209,7 +202,7 @@ export default function KicktippMatrixTable({
   return (
     <div className={`overflow-hidden ${v.wrapper} ${className}`}>
       {showLegend && (
-        <SummaryLegend variant={variant} size={size} snapshotMatchday={snapshotMatchday} />
+        <SummaryLegend variant={variant} size={size} />
       )}
       <div className="overflow-x-auto">
         <table className={`w-full min-w-0 ${s.table} border-collapse`}>

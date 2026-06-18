@@ -86,7 +86,7 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-orendt-gray-50 flex flex-col">
       <Header user={user} currentPage="profile" />
-      <main className="flex-1 max-w-xl mx-auto w-full px-4 sm:px-6 py-10">
+      <main className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 py-10">
         <h1 className="font-display text-3xl font-bold uppercase tracking-tight mb-8">Profil</h1>
         {message && <div className="mb-4 px-4 py-3 bg-green-50 border border-green-100 rounded-2xl text-green-700 text-sm">{message}</div>}
         {error && <div className="mb-4 px-4 py-3 bg-red-50 border border-red-100 rounded-2xl text-red-600 text-sm">{error}</div>}

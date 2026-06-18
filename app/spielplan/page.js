@@ -120,7 +120,7 @@ export default function SpielplanPage() {
   return (
     <div className="min-h-screen bg-orendt-gray-50 flex flex-col">
       <Header user={user} currentPage="spielplan" />
-      <main className={`flex-1 ${filter === "ko" ? "max-w-[100vw]" : "max-w-3xl"} mx-auto w-full px-4 sm:px-6 py-10 ${saveFab.hasPending ? "pb-24" : ""}`}>
+      <main className={`flex-1 ${filter === "ko" ? "max-w-[100vw]" : "max-w-6xl"} mx-auto w-full px-4 sm:px-6 py-10 ${saveFab.hasPending ? "pb-24" : ""}`}>
         <h1 className="font-display text-3xl font-bold uppercase tracking-tight mb-6">Spielplan</h1>
         <div className="flex items-center justify-between gap-3 mb-4 min-w-0">
           <div className="flex gap-2 overflow-x-auto scrollbar-hide min-w-0">
