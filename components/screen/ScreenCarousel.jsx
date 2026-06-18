@@ -5,6 +5,7 @@ import ScheduleSlide from "./slides/ScheduleSlide"
 import ResultsSlide from "./slides/ResultsSlide"
 import TimelineSlide from "./slides/TimelineSlide"
 import TablesSlide from "./slides/TablesSlide"
+import KnockoutSlide from "./slides/KnockoutSlide"
 import LeaderboardSlide from "./slides/LeaderboardSlide"
 import ScreenNewsTicker from "./ScreenNewsTicker"
 
@@ -26,6 +27,7 @@ function buildSlides(data) {
     { id: "leaderboard", component: LeaderboardSlide, props: { leaderboard: data.leaderboard || {} } },
     { id: "upcoming", component: ScheduleSlide, props: { upcoming: data.upcoming } },
     { id: "tables", component: TablesSlide, props: { tables: data.tables || [] } },
+    { id: "knockout", component: KnockoutSlide, props: { knockout: data.knockout || [] } },
     { id: "recap", component: TimelineSlide, props: { timelines: data.timelines || [] } },
     { id: "recent", component: ResultsSlide, props: { recent: data.recent || [] } },
   ]

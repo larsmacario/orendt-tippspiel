@@ -28,16 +28,23 @@ const SECTIONS = [
 
 const SCORING_ROWS = [
   { points: "4", label: "Exaktes Ergebnis", example: "Tipp 2:1, Ergebnis 2:1", accent: true },
-  { points: "3", label: "Richtige Tordifferenz", example: "Tipp 3:1, Ergebnis 2:0 (Diff +2)" },
+  { points: "3", label: "Richtige Tordifferenz", example: "Tipp 3:1, Ergebnis 2:0 (Diff +2, nur bei Sieg)" },
   { points: "2", label: "Richtige Tendenz", example: "Tipp 1:0, Ergebnis 2:0 (Heimsieg)" },
+  { points: "2", label: "Richtige Tendenz (Remis)", example: "Tipp 1:1, Ergebnis 2:2 — kein 3-Punkte-Torverhältnis" },
   { points: "0", label: "Falscher Tipp", example: "Tipp 2:1, Ergebnis 0:1" },
+]
+
+const STANDARD_RULE_ROWS = [
+  { outcome: "Heimsieg", tendency: "2", diff: "3", exact: "4" },
+  { outcome: "Unentschieden", tendency: "2", diff: "–", exact: "4" },
+  { outcome: "Auswärtssieg", tendency: "2", diff: "3", exact: "4" },
 ]
 
 const STEPS = [
   { step: "1", title: "Dashboard oder Spielplan öffnen", text: "Unter Dashboard siehst du fehlende Tipps. Im Spielplan findest du alle Spiele mit Filtern." },
-  { step: "2", title: "Ergebnis eingeben", text: "Trage Heim- und Auswärtstore ein. Bestätige deinen Tipp mit dem Speichern-Button unten." },
+  { step: "2", title: "Ergebnis eingeben", text: "Trage Heim- und Auswärtstore nach 90 Minuten inkl. Nachspielzeit ein. Bestätige deinen Tipp mit dem Speichern-Button unten." },
   { step: "3", title: "Bis zur Deadline ändern", text: "Tipps kannst du zurücksetzen und neu eingeben, solange die Tipp-Sperre noch nicht aktiv ist." },
-  { step: "4", title: "Punkte sammeln", text: "Nach Abpfiff werden deine Punkte automatisch berechnet und in der Rangliste verbucht." },
+  { step: "4", title: "Punkte sammeln", text: "Nach Abpfiff werden deine Punkte automatisch berechnet — bei Remis maximal 2 oder 4 Punkte, nie 3." },
 ]
 
 function SectionCard({ id, icon: Icon, title, children }) {
@@ -112,7 +119,7 @@ export default function AnleitungPage() {
             <div className="grid sm:grid-cols-3 gap-4">
               {[
                 { title: "Tippen", text: "Ergebnisse für Spiele der Gruppen- und K.o.-Phase abgeben" },
-                { title: "Punkte", text: "Bis zu 4 Punkte pro Spiel nach Kicker-System" },
+                { title: "Punkte", text: "Bis zu 4 Punkte pro Spiel — bei Remis max. 2 oder 4" },
                 { title: "Rangliste", text: "Vergleich mit allen aktiven Kolleg:innen" },
               ].map((item) => (
                 <div key={item.title} className="p-4 rounded-xl bg-orendt-gray-50 border border-orendt-gray-100">
@@ -126,13 +133,44 @@ export default function AnleitungPage() {
           <SectionCard id="punkte" icon={Target} title="Punktesystem">
             <p className="text-orendt-gray-600 leading-relaxed mb-4">
               Wir nutzen das bewährte Kicker-Punktesystem. Pro Spiel kannst du maximal 4 Punkte erhalten.
-              Bei Unentschieden gibt es keine Tordifferenz-Punkte — nur exakt (4) oder richtige Tendenz (2).
+              Bei Unentschieden gibt es <strong className="text-orendt-black">keine Tordifferenz-Punkte</strong> —
+              das Torverhältnis wäre immer 0:0 und wäre unfair. Es gibt nur exakt (4) oder richtige Tendenz (2).
             </p>
             <p className="text-orendt-gray-600 leading-relaxed mb-6">
-              Es wird das Ergebnis nach 90 Minuten inkl. Nachspielzeit getippt und gewertet.
-              Tore in der Verlängerung und Elfmeterschießen zählen nicht.
+              Es wird das Ergebnis <strong className="text-orendt-black">nach 90 Minuten inkl. Nachspielzeit</strong> getippt und gewertet —
+              in Gruppen- und K.o.-Phase gleichermaßen. Tore in der Verlängerung und Elfmeterschießen zählen nicht.
               In der Gruppenphase entfällt Verlängerung und Elfmeter ohnehin (FIFA-Regel).
               Bei K.o.-Spielen mit Verlängerung kann der Admin das 90-Minuten-Ergebnis manuell korrigieren.
+            </p>
+
+            <p className="font-display font-bold text-[10px] uppercase tracking-wider text-orendt-gray-500 mb-3">
+              Standardregel
+            </p>
+            <div className="overflow-x-auto rounded-xl border border-orendt-gray-200 mb-6">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-orendt-gray-50 border-b border-orendt-gray-200">
+                    <th className="text-left px-4 py-3 font-display font-bold text-[10px] uppercase tracking-wider text-orendt-gray-500">Ausgang</th>
+                    <th className="text-center px-4 py-3 font-display font-bold text-[10px] uppercase tracking-wider text-orendt-gray-500">Tendenz</th>
+                    <th className="text-center px-4 py-3 font-display font-bold text-[10px] uppercase tracking-wider text-orendt-gray-500">Tordifferenz</th>
+                    <th className="text-center px-4 py-3 font-display font-bold text-[10px] uppercase tracking-wider text-orendt-gray-500">Ergebnis</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {STANDARD_RULE_ROWS.map((row) => (
+                    <tr key={row.outcome} className="border-b border-orendt-gray-100 last:border-0">
+                      <td className="px-4 py-3 font-medium text-orendt-black">{row.outcome}</td>
+                      <td className="px-4 py-3 text-center tabular-nums text-orendt-gray-700">{row.tendency}</td>
+                      <td className="px-4 py-3 text-center tabular-nums text-orendt-gray-700">{row.diff}</td>
+                      <td className="px-4 py-3 text-center tabular-nums font-display font-bold text-orendt-black">{row.exact}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <p className="font-display font-bold text-[10px] uppercase tracking-wider text-orendt-gray-500 mb-3">
+              Beispiele
             </p>
             <div className="overflow-x-auto rounded-xl border border-orendt-gray-200">
               <table className="w-full text-sm">
@@ -144,8 +182,8 @@ export default function AnleitungPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {SCORING_ROWS.map((row) => (
-                    <tr key={row.points} className="border-b border-orendt-gray-100 last:border-0">
+                  {SCORING_ROWS.map((row, index) => (
+                    <tr key={`${row.points}-${row.label}-${index}`} className="border-b border-orendt-gray-100 last:border-0">
                       <td className="px-4 py-3">
                         <span className={`inline-flex items-center justify-center w-8 h-8 rounded-lg font-display font-bold text-sm ${row.accent ? "bg-orendt-accent text-orendt-black" : "bg-orendt-gray-100 text-orendt-black"}`}>
                           {row.points}

@@ -1,14 +1,17 @@
 "use client"
 
-import { useEffect, useState, useMemo } from "react"
+import { useEffect, useState, useMemo, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/hooks"
 import Header from "@/components/Header"
 import Footer from "@/components/Footer"
 import PredictionRow from "@/components/PredictionRow"
+import KnockoutBracket from "@/components/knockout/KnockoutBracket"
+import MatchdayPicker from "@/components/MatchdayPicker"
 import { getMatches, getMyPredictions, getPredictionLockMinutes } from "@/lib/supabase"
 import { usePredictionSaveFab, PredictionSaveFab } from "@/lib/usePredictionSaveFab"
-import { isLocked, PHASE_LABELS } from "@/lib/dates"
+import { isLocked, PHASE_LABELS, getMatchdayKey } from "@/lib/dates"
+import { buildMatchdayOptions, resolveDefaultMatchdayKey } from "@/lib/matchdays"
 import {
   GROUP_CODES,
   getMatchGroupCode,
@@ -30,8 +33,10 @@ export default function SpielplanPage() {
   const [predictions, setPredictions] = useState({})
   const [filter, setFilter] = useState("all")
   const [groupFilter, setGroupFilter] = useState("all")
+  const [matchdayFilter, setMatchdayFilter] = useState("all")
   const [lockMinutes, setLockMinutes] = useState(30)
   const [dataLoading, setDataLoading] = useState(true)
+  const matchdayUserPickedRef = useRef(false)
 
   useEffect(() => {
     if (!loading && !user) router.replace("/login")
@@ -60,15 +65,34 @@ export default function SpielplanPage() {
     if (filter === "ko") setGroupFilter("all")
   }, [filter])
 
+  const matchdayOptions = useMemo(
+    () => buildMatchdayOptions(matches, filter),
+    [matches, filter]
+  )
+
+  useEffect(() => {
+    if (!matchdayUserPickedRef.current) {
+      setMatchdayFilter(resolveDefaultMatchdayKey(matchdayOptions))
+    }
+  }, [filter, matchdayOptions])
+
+  useEffect(() => {
+    if (matchdayFilter === "all") return
+    if (!matchdayOptions.some((o) => o.key === matchdayFilter)) {
+      setMatchdayFilter(resolveDefaultMatchdayKey(matchdayOptions))
+    }
+  }, [matchdayFilter, matchdayOptions])
+
   const filtered = useMemo(() => {
     return matches.filter((m) => {
       if (filter === "group" && m.phase !== "group") return false
       if (filter === "ko" && m.phase === "group") return false
       if (filter === "missing" && (predictions[m.id] || isLocked(m.kickoff_at, lockMinutes))) return false
       if (groupFilter !== "all" && getMatchGroupCode(m) !== groupFilter) return false
+      if (matchdayFilter !== "all" && getMatchdayKey(m.kickoff_at) !== matchdayFilter) return false
       return true
     })
-  }, [matches, filter, groupFilter, predictions, lockMinutes])
+  }, [matches, filter, groupFilter, matchdayFilter, predictions, lockMinutes])
 
   const grouped = useMemo(() => {
     const groups = {}
@@ -96,20 +120,33 @@ export default function SpielplanPage() {
   return (
     <div className="min-h-screen bg-orendt-gray-50 flex flex-col">
       <Header user={user} currentPage="spielplan" />
-      <main className={`flex-1 max-w-3xl mx-auto w-full px-4 sm:px-6 py-10 ${saveFab.hasPending ? "pb-24" : ""}`}>
+      <main className={`flex-1 ${filter === "ko" ? "max-w-[100vw]" : "max-w-3xl"} mx-auto w-full px-4 sm:px-6 py-10 ${saveFab.hasPending ? "pb-24" : ""}`}>
         <h1 className="font-display text-3xl font-bold uppercase tracking-tight mb-6">Spielplan</h1>
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide mb-4">
-          {FILTERS.map((f) => (
-            <button
-              key={f.id}
-              onClick={() => setFilter(f.id)}
-              className={`px-4 py-2 rounded-xl text-[11px] font-display font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${
-                filter === f.id ? "bg-orendt-black text-white" : "bg-white border border-orendt-gray-200 text-orendt-gray-500 hover:text-orendt-black"
-              }`}
-            >
-              {f.label}
-            </button>
-          ))}
+        <div className="flex items-center justify-between gap-3 mb-4 min-w-0">
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide min-w-0">
+            {FILTERS.map((f) => (
+              <button
+                key={f.id}
+                onClick={() => setFilter(f.id)}
+                className={`px-4 py-2 rounded-xl text-[11px] font-display font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${
+                  filter === f.id ? "bg-orendt-black text-white" : "bg-white border border-orendt-gray-200 text-orendt-gray-500 hover:text-orendt-black"
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+          {matchdayOptions.length > 0 && (
+            <MatchdayPicker
+              className="shrink-0 w-[10.5rem] sm:w-[12rem]"
+              value={matchdayFilter}
+              options={matchdayOptions}
+              onChange={(key) => {
+                matchdayUserPickedRef.current = true
+                setMatchdayFilter(key)
+              }}
+            />
+          )}
         </div>
         {showGroupFilters && (
           <div className="flex gap-1.5 overflow-x-auto scrollbar-hide mb-8 pb-1">
@@ -135,7 +172,24 @@ export default function SpielplanPage() {
           </div>
         )}
         {!showGroupFilters && <div className="mb-8" />}
-        {grouped.length === 0 ? (
+        {filter === "ko" ? (
+          filtered.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-orendt-gray-200 p-10 text-center text-orendt-gray-500">
+              Keine Spiele für diesen Filter.
+            </div>
+          ) : (
+            <KnockoutBracket
+              matches={filtered}
+              predictions={predictions}
+              variant="light"
+              editable
+              highlightMissing={false}
+              lockMinutes={lockMinutes}
+              batchSaving={saveFab.saving}
+              onDirtyChange={saveFab.registerDirtyChange}
+            />
+          )
+        ) : grouped.length === 0 ? (
           <div className="bg-white rounded-2xl border border-orendt-gray-200 p-10 text-center text-orendt-gray-500">
             Keine Spiele für diesen Filter.
           </div>
