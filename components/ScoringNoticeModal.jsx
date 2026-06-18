@@ -5,12 +5,12 @@ import { Scale, Info } from "lucide-react"
 
 const POINTS = [
   {
-    title: "Remis: 1 oder 4 Punkte",
-    text: "Bei Unentschieden gibt es keine Tordifferenz-Punkte (kein 3). Richtige Remis-Tendenz bringt 1 Punkt, exakt getippt 4 — z. B. Tipp 1:1, Ergebnis 2:2.",
+    title: "Remis: 2 oder 4 Punkte",
+    text: "Bei Unentschieden gibt es keine Tordifferenz-Punkte (kein 3). Richtige Remis-Tendenz bringt 2 Punkte, exakt getippt 4 — z. B. Tipp 1:1, Ergebnis 2:2.",
   },
   {
     title: "Siege: 2, 3 oder 4 Punkte",
-    text: "Bei Heim- oder Auswärtssieg gilt weiterhin: 2 für Tendenz, 3 für Tordifferenz, 4 für exakt — z. B. Tipp 1:0, Ergebnis 2:0.",
+    text: "Bei Heim- oder Auswärtssieg gilt: 2 für Tendenz, 3 für Tordifferenz, 4 für exakt — z. B. Tipp 1:0, Ergebnis 2:0.",
   },
   {
     title: "Tipps neu berechnet",
