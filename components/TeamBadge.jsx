@@ -1,7 +1,16 @@
 import Image from "next/image"
 
-export function TeamBadge({ team, size = 32 }) {
-  if (!team) return <div className="rounded-full bg-orendt-gray-200" style={{ width: size, height: size }} />
+export function TeamBadge({ team, size = 32, flagEmoji = null }) {
+  if (!team) {
+    return (
+      <div
+        className="rounded-full bg-orendt-gray-100 flex items-center justify-center text-sm shrink-0"
+        style={{ width: size, height: size }}
+      >
+        {flagEmoji || "?"}
+      </div>
+    )
+  }
   if (team.badge_url) {
     return (
       <Image
@@ -9,17 +18,18 @@ export function TeamBadge({ team, size = 32 }) {
         alt={team.name}
         width={size}
         height={size}
-        className="object-contain"
+        className="object-contain shrink-0"
         unoptimized
       />
     )
   }
+  const fallback = flagEmoji || team.flag_emoji || team.code?.slice(0, 2) || "?"
   return (
     <div
-      className="rounded-full bg-orendt-gray-100 flex items-center justify-center text-sm font-bold"
-      style={{ width: size, height: size }}
+      className="rounded-full bg-orendt-gray-100 flex items-center justify-center text-sm font-bold shrink-0"
+      style={{ width: size, height: size, fontSize: size * 0.55 }}
     >
-      {team.flag_emoji || team.code?.slice(0, 2) || "?"}
+      {fallback}
     </div>
   )
 }

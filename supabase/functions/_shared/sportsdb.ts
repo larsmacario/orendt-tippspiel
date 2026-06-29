@@ -96,20 +96,14 @@ export function mapPhaseFromIntRound(intRound: string | number | null | undefine
   return null
 }
 
-/** intRound=32: erste 8 Spiele chronologisch = Letzte 32, nächste 8 = Achtelfinale */
+/** intRound=32: alle 16 K.o.-Spiele der Letzten 32 (TheSportsDB hat kein separates intRound für AF). */
 export function buildKnockoutPhaseMap(events: Record<string, string>[]): Record<string, string> {
-  const koEvents = events
-    .filter((e) => String(e.intRound) === "32")
-    .map((e) => ({
-      externalId: String(e.idEvent || e.id),
-      kickoff: parseKickoff(e.dateEvent, e.strTime || e.strTimeLocal),
-    }))
-    .sort((a, b) => new Date(a.kickoff).getTime() - new Date(b.kickoff).getTime())
-
   const map: Record<string, string> = {}
-  koEvents.forEach((e, index) => {
-    map[e.externalId] = index < 8 ? "r32" : "r16"
-  })
+  for (const e of events) {
+    if (String(e.intRound) !== "32") continue
+    const externalId = String(e.idEvent || e.id)
+    map[externalId] = "r32"
+  }
   return map
 }
 

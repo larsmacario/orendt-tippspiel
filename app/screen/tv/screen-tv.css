@@ -847,11 +847,49 @@
 }
 
 .tv-ko-slot {
-  width: 14rem;
-  border: 1px solid #333;
+  width: 13rem;
+  border: 1px solid #3a3b40;
   border-radius: 0.5rem;
   overflow: hidden;
-  background: #161616;
+  background: #2c2d31;
+}
+
+.tv-ko-slot-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.35rem 0.625rem;
+  border-bottom: 1px solid #3a3b40;
+}
+
+.tv-ko-kickoff {
+  font-size: 0.6875rem;
+  color: #888;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tv-ko-end-badge {
+  flex-shrink: 0;
+  font-size: 0.5625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  border: 1px solid #3a3b40;
+  background: #1e1f23;
+  color: #aaa;
+}
+
+.tv-ko-live-badge {
+  flex-shrink: 0;
+  font-size: 0.5625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #ef4444;
 }
 
 .tv-ko-slot-live {
@@ -863,9 +901,9 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0 0.5rem;
-  height: 2.25rem;
-  border-bottom: 1px solid #2a2a2a;
+  padding: 0 0.625rem;
+  height: 2rem;
+  border-bottom: 1px solid #3a3b40;
 }
 
 .tv-ko-row:last-child {
@@ -873,8 +911,8 @@
 }
 
 .tv-ko-row-winner {
-  background: rgba(222, 184, 135, 0.12);
-  font-weight: 700;
+  background: rgba(255, 255, 255, 0.06);
+  font-weight: 600;
 }
 
 .tv-ko-team {
@@ -883,15 +921,37 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #fff;
+}
+
+.tv-ko-team-open {
+  color: #888;
+}
+
+.tv-ko-score-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.tv-ko-winner-caret {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.tv-ko-shield {
+  flex-shrink: 0;
+  color: #888;
 }
 
 .tv-ko-score {
   flex-shrink: 0;
-  font-size: 1rem;
+  font-size: 0.875rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+  color: #fff;
 }
 
 .tv-ko-score-live {

@@ -62,7 +62,11 @@ export default function SpielplanPage() {
   const saveFab = usePredictionSaveFab({ userId: user?.id, onSaved: loadData })
 
   useEffect(() => {
-    if (filter === "ko") setGroupFilter("all")
+    if (filter === "ko") {
+      setGroupFilter("all")
+      matchdayUserPickedRef.current = false
+      setMatchdayFilter("all")
+    }
   }, [filter])
 
   const matchdayOptions = useMemo(
@@ -89,7 +93,7 @@ export default function SpielplanPage() {
       if (filter === "ko" && m.phase === "group") return false
       if (filter === "missing" && (predictions[m.id] || isLocked(m.kickoff_at, lockMinutes))) return false
       if (groupFilter !== "all" && getMatchGroupCode(m) !== groupFilter) return false
-      if (matchdayFilter !== "all" && getMatchdayKey(m.kickoff_at) !== matchdayFilter) return false
+      if (filter !== "ko" && matchdayFilter !== "all" && getMatchdayKey(m.kickoff_at) !== matchdayFilter) return false
       return true
     })
   }, [matches, filter, groupFilter, matchdayFilter, predictions, lockMinutes])
@@ -136,16 +140,22 @@ export default function SpielplanPage() {
               </button>
             ))}
           </div>
-          {matchdayOptions.length > 0 && (
-            <MatchdayPicker
-              className="shrink-0 w-[10.5rem] sm:w-[12rem]"
-              value={matchdayFilter}
-              options={matchdayOptions}
-              onChange={(key) => {
-                matchdayUserPickedRef.current = true
-                setMatchdayFilter(key)
-              }}
-            />
+          {filter === "ko" ? (
+            <span className="shrink-0 text-[11px] font-display font-bold uppercase tracking-wider text-orendt-gray-400 whitespace-nowrap">
+              Alle K.o.-Runden
+            </span>
+          ) : (
+            matchdayOptions.length > 0 && (
+              <MatchdayPicker
+                className="shrink-0 w-[10.5rem] sm:w-[12rem]"
+                value={matchdayFilter}
+                options={matchdayOptions}
+                onChange={(key) => {
+                  matchdayUserPickedRef.current = true
+                  setMatchdayFilter(key)
+                }}
+              />
+            )
           )}
         </div>
         {showGroupFilters && (
