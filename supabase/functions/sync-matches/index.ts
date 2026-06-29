@@ -9,6 +9,7 @@ import {
   fetchPreviousEvents,
   mapStatus,
   mapPhase,
+  buildKnockoutPhaseMap,
   resolveGroupCode,
   lookupTeamGroup,
   parseKickoff,
@@ -139,6 +140,8 @@ async function syncSchedule(
     if (t.id && t.group_code) teamGroupMap[t.id] = t.group_code
   })
 
+  const knockoutPhaseMap = buildKnockoutPhaseMap(allEvents)
+
   let updated = 0
   let lastError: string | null = null
   for (let i = 0; i < allEvents.length; i++) {
@@ -156,15 +159,19 @@ async function syncSchedule(
     const awayTeamId = e.idAwayTeam ? teamMap[String(e.idAwayTeam)] : null
     const status = mapStatus(e.strStatus || e.strProgress)
     const { homeScore, awayScore } = parseEventScores(e)
+    const phase = mapPhase(e.strRound, e.strGroup, e.intRound, knockoutPhaseMap[externalId])
+    const groupCode =
+      phase === "group"
+        ? resolveGroupCode(e.strGroup, e.strRound, e.strHomeTeam)
+          || (homeTeamId ? teamGroupMap[homeTeamId] : null)
+          || lookupTeamGroup(e.strHomeTeam)
+        : null
 
     const { error } = await supabase.from("tip_matches").upsert(
       {
         external_id: externalId,
-        phase: mapPhase(e.strRound, e.strGroup),
-        group_code:
-          resolveGroupCode(e.strGroup, e.strRound, e.strHomeTeam)
-          || (homeTeamId ? teamGroupMap[homeTeamId] : null)
-          || lookupTeamGroup(e.strHomeTeam),
+        phase,
+        group_code: groupCode,
         home_team_id: homeTeamId,
         away_team_id: awayTeamId,
         placeholder_home: e.strHomeTeam || null,
