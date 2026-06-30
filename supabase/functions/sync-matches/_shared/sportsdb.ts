@@ -173,10 +173,24 @@ export function parseScore(value: string | number | null | undefined): number | 
   return isNaN(n) ? null : n
 }
 
+export function isPenaltyShootoutStatus(raw: string | null | undefined): boolean {
+  const s = (raw || "").toLowerCase()
+  return s === "pen" || s.includes("penalties") || s.includes("pen shoot")
+}
+
 export function parseEventScores(event: Record<string, string | number | null | undefined>) {
+  const homeScore = parseScore(event.intHomeScore ?? event.intScoreHome)
+  const awayScore = parseScore(event.intAwayScore ?? event.intScoreAway)
+  const rawStatus = event.strStatus || event.strProgress || ""
+  const homeExtra = parseScore(event.intHomeScoreExtra)
+  const awayExtra = parseScore(event.intAwayScoreExtra)
+  const isPen = isPenaltyShootoutStatus(String(rawStatus))
+
   return {
-    homeScore: parseScore(event.intHomeScore ?? event.intScoreHome),
-    awayScore: parseScore(event.intAwayScore ?? event.intScoreAway),
+    homeScore,
+    awayScore,
+    homePenScore: isPen && homeExtra != null && awayExtra != null ? homeExtra : null,
+    awayPenScore: isPen && homeExtra != null && awayExtra != null ? awayExtra : null,
   }
 }
 

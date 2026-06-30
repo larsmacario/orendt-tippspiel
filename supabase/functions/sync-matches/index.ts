@@ -158,7 +158,7 @@ async function syncSchedule(
     const homeTeamId = e.idHomeTeam ? teamMap[String(e.idHomeTeam)] : null
     const awayTeamId = e.idAwayTeam ? teamMap[String(e.idAwayTeam)] : null
     const status = mapStatus(e.strStatus || e.strProgress)
-    const { homeScore, awayScore } = parseEventScores(e)
+    const { homeScore, awayScore, homePenScore, awayPenScore } = parseEventScores(e)
     const phase = mapPhase(e.strRound, e.strGroup, e.intRound, knockoutPhaseMap[externalId])
     const groupCode =
       phase === "group"
@@ -179,6 +179,8 @@ async function syncSchedule(
         kickoff_at: parseKickoff(e.dateEvent, e.strTime || e.strTimeLocal),
         home_score: homeScore,
         away_score: awayScore,
+        home_pen_score: homePenScore,
+        away_pen_score: awayPenScore,
         status,
         raw_status: e.strStatus || null,
         venue: e.strVenue || null,
@@ -235,13 +237,15 @@ async function applyEventResults(
     if (!existing || existing.manual_override) continue
 
     const status = mapStatus(e.strStatus || e.strProgress)
-    const { homeScore, awayScore } = parseEventScores(e)
+    const { homeScore, awayScore, homePenScore, awayPenScore } = parseEventScores(e)
 
     const { error } = await supabase
       .from("tip_matches")
       .update({
         home_score: homeScore,
         away_score: awayScore,
+        home_pen_score: homePenScore,
+        away_pen_score: awayPenScore,
         status,
         raw_status: e.strStatus || e.strProgress || null,
         last_synced_at: new Date().toISOString(),

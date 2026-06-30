@@ -75,6 +75,8 @@ CREATE TABLE IF NOT EXISTS public.tip_matches (
   kickoff_at TIMESTAMPTZ NOT NULL,
   home_score INTEGER,
   away_score INTEGER,
+  home_pen_score INTEGER,
+  away_pen_score INTEGER,
   status TEXT NOT NULL DEFAULT 'scheduled' CHECK (status IN ('scheduled', 'live', 'finished')),
   raw_status TEXT,
   venue TEXT,

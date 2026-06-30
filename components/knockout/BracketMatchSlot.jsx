@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { TeamBadge } from "../TeamBadge"
 import { ScreenBadge } from "../screen/ScreenBadge"
 import { formatKickoffBracket, isLocked } from "@/lib/dates"
-import { getMatchWinner, isProjectedKnockoutMatch } from "@/lib/knockout-bracket"
+import { getMatchWinner, hasPenaltyShootoutResult, isProjectedKnockoutMatch } from "@/lib/knockout-bracket"
 import { getTeamFlagEmoji } from "@/lib/groups"
 
 function parseTips(homeTip, awayTip) {
@@ -197,6 +197,7 @@ export default function BracketMatchSlot({
   const isLive = normalized.status === "live"
   const isFinished = normalized.status === "finished"
   const winner = getMatchWinner(match)
+  const penaltyShootout = hasPenaltyShootoutResult(match)
   const projected = isProjectedKnockoutMatch(normalized)
   const canEdit = editable && !locked && !isFinished && !isLive && !projected
 
@@ -243,7 +244,7 @@ export default function BracketMatchSlot({
         <span className={`text-[11px] font-display truncate ${v.meta}`}>{kickoffLabel}</span>
         {isFinished && (
           <span className={`text-[9px] font-display font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded ${v.badge} border shrink-0`}>
-            Endstand
+            {penaltyShootout ? "Endstand · i.E." : "Endstand"}
           </span>
         )}
         {isLive && (
