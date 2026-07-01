@@ -137,10 +137,9 @@ export default function AnleitungPage() {
               und wäre unfair. Stattdessen nur Tendenz (2) oder exakt (4), nie 3.
             </p>
             <p className="text-orendt-gray-600 leading-relaxed mb-6">
-              Es wird das Ergebnis <strong className="text-orendt-black">nach 90 Minuten inkl. Nachspielzeit</strong> getippt und gewertet —
-              in Gruppen- und K.o.-Phase gleichermaßen. Tore in der Verlängerung und Elfmeterschießen zählen nicht.
-              In der Gruppenphase entfällt Verlängerung und Elfmeter ohnehin (FIFA-Regel).
-              Bei K.o.-Spielen mit Verlängerung kann der Admin das 90-Minuten-Ergebnis manuell korrigieren.
+              Für <strong className="text-orendt-black">4 Punkte (exakt)</strong> und <strong className="text-orendt-black">3 Punkte (Tordifferenz)</strong> zählt
+              das Ergebnis nach 90 Minuten inkl. Nachspielzeit. Endet ein K.o.-Spiel remis, zählt der Sieger im Elfmeterschießen
+              für die <strong className="text-orendt-black">2-Punkte-Tendenz</strong>. Ein exakt getipptes 90-Minuten-Remis bleibt 4 Punkte wert.
             </p>
 
             <div className="p-4 rounded-xl bg-orendt-accent/10 border border-orendt-accent/25 mb-6">

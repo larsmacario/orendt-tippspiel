@@ -63,7 +63,7 @@ export async function fetchEventTimeline(apiKey: string, eventId: string) {
 
 export function mapStatus(raw: string | null | undefined): "scheduled" | "live" | "finished" {
   const s = (raw || "").toLowerCase()
-  if (s.includes("finished") || s.includes("ft") || s.includes("aet") || s.includes("pen")) return "finished"
+  if (s === "ap" || s.includes("finished") || s.includes("ft") || s.includes("aet") || s.includes("pen")) return "finished"
   if (s.includes("live") || s.includes("1h") || s.includes("2h") || s.includes("ht") || s.includes("et") || s.includes("pen")) return "live"
   if (s.includes("not started") || s.includes("ns") || s.includes("scheduled") || s === "") return "scheduled"
   return "scheduled"
@@ -175,7 +175,7 @@ export function parseScore(value: string | number | null | undefined): number | 
 
 export function isPenaltyShootoutStatus(raw: string | null | undefined): boolean {
   const s = (raw || "").toLowerCase()
-  return s === "pen" || s.includes("penalties") || s.includes("pen shoot")
+  return s === "ap" || s === "pen" || s.includes("penalties") || s.includes("pen shoot")
 }
 
 export function parseEventScores(event: Record<string, string | number | null | undefined>) {

@@ -17,8 +17,8 @@ const POINTS = [
     text: "Alle abgeschlossenen Spiele wurden mit der aktualisierten Regel neu gewertet. Dein Punktestand und dein Rang können sich geändert haben.",
   },
   {
-    title: "90-Minuten-Regel",
-    text: "Es zählt das Ergebnis nach 90 Minuten inkl. Nachspielzeit. Tore in der Verlängerung und Elfmeterschießen zählen nicht.",
+    title: "K.o.-Sieger zählt für die Tendenz",
+    text: "4 Punkte (exakt) und 3 Punkte (Tordifferenz) beziehen sich auf 90 Minuten. Bei einem Remis zählt der Sieger im Elfmeterschießen für 2 Tendenzpunkte.",
   },
 ]
 

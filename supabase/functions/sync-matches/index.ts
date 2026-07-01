@@ -14,6 +14,7 @@ import {
   lookupTeamGroup,
   parseKickoff,
   parseEventScores,
+  isPenaltyShootoutStatus,
   filterEventsForSeason,
   countryToEmoji,
 } from "./_shared/sportsdb.ts"
@@ -149,7 +150,7 @@ async function syncSchedule(
     const externalId = String(e.idEvent || e.id)
     const { data: existing } = await supabase
       .from("tip_matches")
-      .select("manual_override")
+      .select("manual_override, home_pen_score, away_pen_score")
       .eq("external_id", externalId)
       .maybeSingle()
 
@@ -159,6 +160,7 @@ async function syncSchedule(
     const awayTeamId = e.idAwayTeam ? teamMap[String(e.idAwayTeam)] : null
     const status = mapStatus(e.strStatus || e.strProgress)
     const { homeScore, awayScore, homePenScore, awayPenScore } = parseEventScores(e)
+    const isPenaltyResult = isPenaltyShootoutStatus(e.strStatus || e.strProgress)
     const phase = mapPhase(e.strRound, e.strGroup, e.intRound, knockoutPhaseMap[externalId])
     const groupCode =
       phase === "group"
@@ -179,8 +181,8 @@ async function syncSchedule(
         kickoff_at: parseKickoff(e.dateEvent, e.strTime || e.strTimeLocal),
         home_score: homeScore,
         away_score: awayScore,
-        home_pen_score: homePenScore,
-        away_pen_score: awayPenScore,
+        home_pen_score: isPenaltyResult ? (homePenScore ?? existing?.home_pen_score ?? null) : null,
+        away_pen_score: isPenaltyResult ? (awayPenScore ?? existing?.away_pen_score ?? null) : null,
         status,
         raw_status: e.strStatus || null,
         venue: e.strVenue || null,
@@ -230,7 +232,7 @@ async function applyEventResults(
     const externalId = String(e.idEvent || e.id)
     const { data: existing } = await supabase
       .from("tip_matches")
-      .select("manual_override")
+      .select("manual_override, home_pen_score, away_pen_score")
       .eq("external_id", externalId)
       .maybeSingle()
 
@@ -238,14 +240,15 @@ async function applyEventResults(
 
     const status = mapStatus(e.strStatus || e.strProgress)
     const { homeScore, awayScore, homePenScore, awayPenScore } = parseEventScores(e)
+    const isPenaltyResult = isPenaltyShootoutStatus(e.strStatus || e.strProgress)
 
     const { error } = await supabase
       .from("tip_matches")
       .update({
         home_score: homeScore,
         away_score: awayScore,
-        home_pen_score: homePenScore,
-        away_pen_score: awayPenScore,
+        home_pen_score: isPenaltyResult ? (homePenScore ?? existing.home_pen_score ?? null) : null,
+        away_pen_score: isPenaltyResult ? (awayPenScore ?? existing.away_pen_score ?? null) : null,
         status,
         raw_status: e.strStatus || e.strProgress || null,
         last_synced_at: new Date().toISOString(),
